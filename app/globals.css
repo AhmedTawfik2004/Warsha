@@ -1,26 +1,601 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;900&family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── DESIGN TOKENS ──────────────────────────────────────────────────────────
+   Warsha — Egyptian automotive marketplace
+   Design direction: Dark-first, premium garage aesthetic.
+   Amber-orange primary, deep charcoal surfaces, sharp type, subtle glows.
+   Signature: Category cards with coloured left-border glow on hover.
+────────────────────────────────────────────────────────────────────────────── */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand — warmer, richer orange */
+  --accent:          #F07823;
+  --accent-hover:    #FF8C35;
+  --accent-deep:     #C85E0A;
+  --accent-muted:    rgba(240, 120, 35, 0.10);
+  --accent-muted-lg: rgba(240, 120, 35, 0.06);
+  --accent-border:   rgba(240, 120, 35, 0.30);
+  --accent-glow:     rgba(240, 120, 35, 0.18);
+
+  /* Light mode surfaces — cooler, more refined */
+  --bg:              #F5F4F2;
+  --bg-secondary:    #ECEAE6;
+  --bg-card:         #FFFFFF;
+  --bg-card-hover:   #FAFAF8;
+  --bg-overlay:      rgba(255, 255, 255, 0.85);
+
+  /* Light mode text */
+  --text-primary:    #0F0E0D;
+  --text-secondary:  #524F4C;
+  --text-tertiary:   #9B9490;
+  --text-inverse:    #FFFFFF;
+
+  /* Light mode borders */
+  --border:          rgba(0, 0, 0, 0.07);
+  --border-strong:   rgba(0, 0, 0, 0.13);
+  --border-accent:   rgba(240, 120, 35, 0.25);
+
+  /* Shadows — more layered */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.05);
+  --shadow-xl: 0 24px 64px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.06);
+  --shadow-accent: 0 8px 32px rgba(240,120,35,0.22), 0 2px 8px rgba(240,120,35,0.14);
+
+  /* Radius scale */
+  --radius-xs:  6px;
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  18px;
+  --radius-xl:  24px;
+  --radius-2xl: 32px;
+  --radius-pill: 999px;
+
+  /* Nav */
+  --nav-h: 62px;
+
+  /* Transitions */
+  --t-fast:   0.12s ease;
+  --t-base:   0.22s ease;
+  --t-slow:   0.35s ease;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ─── DARK MODE ──────────────────────────────────────────────────────────────
+   True deep black — not grey. The workshop floor at night.
+────────────────────────────────────────────────────────────────────────────── */
+
+[data-theme="dark"] {
+  --bg:              #080807;
+  --bg-secondary:    #111110;
+  --bg-card:         #161514;
+  --bg-card-hover:   #1C1B1A;
+  --bg-overlay:      rgba(22, 21, 20, 0.92);
+
+  --text-primary:    #F0EDE8;
+  --text-secondary:  #857F79;
+  --text-tertiary:   #3E3B38;
+  --text-inverse:    #0F0E0D;
+
+  --border:          rgba(255, 255, 255, 0.06);
+  --border-strong:   rgba(255, 255, 255, 0.11);
+  --border-accent:   rgba(240, 120, 35, 0.22);
+
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.5);
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.4);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.7), 0 2px 8px rgba(0,0,0,0.5);
+  --shadow-xl: 0 24px 64px rgba(0,0,0,0.8), 0 4px 16px rgba(0,0,0,0.6);
+  --shadow-accent: 0 8px 32px rgba(240,120,35,0.30), 0 2px 8px rgba(240,120,35,0.20);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── BASE ───────────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg);
+  color: var(--text-primary);
+  transition: background-color var(--t-slow), color var(--t-base);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+[dir="rtl"] {
+  font-family: 'Cairo', 'Segoe UI', system-ui, sans-serif;
+  letter-spacing: 0;
+}
+[dir="ltr"] {
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+::selection {
+  background: rgba(240, 120, 35, 0.22);
+  color: var(--text-primary);
+}
+
+/* ─── SCROLLBAR ──────────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: var(--radius-pill);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+/* ─── TYPOGRAPHY SCALE ───────────────────────────────────────────────────────── */
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+/* ─── NAVIGATION ─────────────────────────────────────────────────────────────── */
+
+.warsha-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: var(--nav-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  background: var(--bg-overlay);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--border);
+  transition: background var(--t-base), border-color var(--t-base);
+}
+
+.warsha-nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+.warsha-nav-logo-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 15px;
+  box-shadow: var(--shadow-accent);
+  transition: box-shadow var(--t-base), transform var(--t-fast);
+}
+
+.warsha-nav-logo:hover .warsha-nav-logo-icon {
+  transform: scale(1.05);
+  box-shadow: 0 12px 36px rgba(240,120,35,0.35);
+}
+
+/* ─── CARDS ──────────────────────────────────────────────────────────────────── */
+
+/* Base card */
+.warsha-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color var(--t-base),
+    box-shadow var(--t-base),
+    transform var(--t-base),
+    background var(--t-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.warsha-card:hover {
+  border-color: var(--border-accent);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-3px);
+  background: var(--bg-card-hover);
+}
+
+/* Signature element: coloured left-border glow on hover */
+.warsha-card::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity var(--t-base), top var(--t-base), bottom var(--t-base);
+}
+
+.warsha-card:hover::before {
+  opacity: 1;
+  top: 10%;
+  bottom: 10%;
+}
+
+/* Glass card variant */
+.warsha-card-glass {
+  background: var(--bg-overlay);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+/* ─── BUTTONS ────────────────────────────────────────────────────────────────── */
+
+.warsha-btn-primary {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
+  color: #fff;
+  font-weight: 700;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    opacity var(--t-fast),
+    transform var(--t-fast),
+    box-shadow var(--t-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.warsha-btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.warsha-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-accent);
+  opacity: 0.95;
+}
+
+.warsha-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.warsha-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.warsha-btn-ghost {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    background var(--t-base),
+    color var(--t-base),
+    border-color var(--t-base),
+    transform var(--t-fast);
+  font-weight: 600;
+}
+
+.warsha-btn-ghost:hover:not(:disabled) {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+/* Icon button */
+.warsha-btn-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--t-base), border-color var(--t-base), transform var(--t-fast);
+  color: var(--text-secondary);
+}
+
+.warsha-btn-icon:hover {
+  background: var(--bg-card);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+  transform: scale(1.05);
+}
+
+/* ─── BADGES ─────────────────────────────────────────────────────────────────── */
+
+.warsha-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.warsha-badge-accent {
+  background: var(--accent-muted);
+  color: var(--accent);
+  border: 1px solid var(--accent-border);
+}
+
+.warsha-badge-outline {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-strong);
+}
+
+/* ─── INPUTS ─────────────────────────────────────────────────────────────────── */
+
+.warsha-input {
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color var(--t-base), box-shadow var(--t-base), background var(--t-base);
+}
+
+.warsha-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-muted);
+  background: var(--bg-card);
+}
+
+.warsha-input::placeholder { color: var(--text-tertiary); }
+
+/* ─── DIVIDERS ───────────────────────────────────────────────────────────────── */
+
+.warsha-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
+  border: none;
+  margin: 0;
+}
+
+/* ─── HERO SPECIFIC ──────────────────────────────────────────────────────────── */
+
+.warsha-hero-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 80%);
+}
+
+.warsha-hero-glow {
+  position: absolute;
+  top: -120px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 700px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center,
+    rgba(240, 120, 35, 0.10) 0%,
+    rgba(240, 120, 35, 0.04) 40%,
+    transparent 70%);
+  filter: blur(40px);
+  pointer-events: none;
+}
+
+/* ─── CATEGORY CARDS ─────────────────────────────────────────────────────────── */
+
+.warsha-cat-card {
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 152px;
+  text-decoration: none;
+  transition:
+    background var(--t-base),
+    border-color var(--t-base),
+    transform var(--t-base),
+    box-shadow var(--t-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.warsha-cat-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--cat-accent-color, transparent) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity var(--t-base);
+  pointer-events: none;
+}
+
+.warsha-cat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--cat-accent-border, var(--border-strong));
+  background: var(--cat-accent-bg, var(--bg-card-hover));
+}
+
+.warsha-cat-card:hover::after { opacity: 1; }
+
+/* ─── SHOP RATING STARS ──────────────────────────────────────────────────────── */
+
+.warsha-stars {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.warsha-star-filled { color: #F59E0B; }
+.warsha-star-empty  { color: var(--border-strong); }
+
+/* ─── SECTION LABELS ─────────────────────────────────────────────────────────── */
+
+.warsha-section-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* ─── ANIMATIONS ─────────────────────────────────────────────────────────────── */
+
+.eyebrow-pulse {
+  animation: pulse-dot 2.8s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.85); }
+}
+
+.warsha-fade-in {
+  animation: fadeIn 0.4s ease both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.warsha-slide-up {
+  animation: slideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Staggered children */
+.warsha-stagger > *:nth-child(1) { animation-delay: 0.05s; }
+.warsha-stagger > *:nth-child(2) { animation-delay: 0.10s; }
+.warsha-stagger > *:nth-child(3) { animation-delay: 0.15s; }
+.warsha-stagger > *:nth-child(4) { animation-delay: 0.20s; }
+.warsha-stagger > *:nth-child(5) { animation-delay: 0.25s; }
+.warsha-stagger > *:nth-child(6) { animation-delay: 0.30s; }
+
+/* ─── STAT COUNTER ───────────────────────────────────────────────────────────── */
+
+.warsha-stat-val {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── SEARCH BAR ─────────────────────────────────────────────────────────────── */
+
+.warsha-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px;
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  border: 1.5px solid var(--border-strong);
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color var(--t-base),
+    box-shadow var(--t-base);
+}
+
+.warsha-search-bar:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-muted), var(--shadow-md);
+}
+
+/* ─── FEATURED SHOP CARD ─────────────────────────────────────────────────────── */
+
+.warsha-featured-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 22px;
+  position: relative;
+  transition:
+    border-color var(--t-base),
+    box-shadow var(--t-base),
+    transform var(--t-base);
+  overflow: hidden;
+}
+
+.warsha-featured-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0;
+  transition: opacity var(--t-base);
+}
+
+.warsha-featured-card:hover {
+  border-color: var(--accent-border);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+}
+
+.warsha-featured-card:hover::before { opacity: 1; }
+
+/* ─── REDUCED MOTION ─────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─── RESPONSIVE HELPERS ──────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  :root { --nav-h: 56px; }
+  .warsha-nav { padding: 0 16px; }
+  .warsha-cat-card { min-height: 130px; padding: 16px; }
 }
