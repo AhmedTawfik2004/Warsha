@@ -194,7 +194,7 @@ export async function sendMessage(conversationId: number, senderId: string, cont
   return { error };
 }
 
-export function subscribeToMessages(conversationId: number, onNew: (msg: any) => void) {
+export function subscribeToMessages(conversationId: number, onNew: (msg: any) => void): () => void {
   const s = createClient();
   const sub = s
     .channel(`messages:${conversationId}`)
@@ -205,7 +205,7 @@ export function subscribeToMessages(conversationId: number, onNew: (msg: any) =>
       filter: `conversation_id=eq.${conversationId}`,
     }, payload => onNew(payload.new))
     .subscribe();
-  return () => s.removeChannel(sub);
+  return () => { s.removeChannel(sub); };
 }
 
 // ─── Admin ────────────────────────────────────────────────────────
