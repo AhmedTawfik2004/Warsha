@@ -138,3 +138,103 @@ export async function submitReview(shopId: number, rating: number, comment: stri
     return { error: e };
   }
 }
+// ─── Conversations & Messages ─────────────────────────────────────
+
+export async function getOrCreateConversation(userId: string, shopId: number) {
+  const s = createClient();
+  const { data: existing } = await s
+    .from("conversations")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("shop_id", shopId)
+    .single();
+  if (existing) return existing;
+  const { data, error } = await s
+    .from("conversations")
+    .insert({ user_id: userId, shop_id: shopId })
+    .select()
+    .single();
+  if (error) { console.error(error); return null; }
+  return data;
+}
+
+export async function getConversations(userId: string) {
+  const s = createClient();
+  const { data } = await s
+    .from("conversations")
+    .select("*")
+    .eq("user_id", userId)
+    .order("last_message_at", { ascending: false });
+  return data ?? [];
+}
+
+export async function getMessages(conversationId: number) {
+  const s = createClient();
+  const { data } = await s
+    .from("messages")
+    .select("*")
+    .eq("conversation_id", conversationId)
+    .order("created_at", { ascending: true });
+  return data ?? [];
+}
+
+export async function sendMessage(conversationId: number, senderId: string, content: string) {
+  const s = createClient();
+  const { error } = await s.from("messages").insert({
+    conversation_id: conversationId,
+    sender_id: senderId,
+    content,
+  });
+  if (!error) {
+    await s.from("conversations").update({
+      last_message: content,
+      last_message_at: new Date().toISOString(),
+    }).eq("id", conversationId);
+  }
+  return { error };
+}
+
+export function subscribeToMessages(conversationId: number, onNew: (msg: any) => void) {
+  const s = createClient();
+  const sub = s
+    .channel(`messages:${conversationId}`)
+    .on("postgres_changes", {
+      event: "INSERT",
+      schema: "public",
+      table: "messages",
+      filter: `conversation_id=eq.${conversationId}`,
+    }, payload => onNew(payload.new))
+    .subscribe();
+  return () => s.removeChannel(sub);
+}
+
+// ─── Admin ────────────────────────────────────────────────────────
+
+export async function isAdmin(userId: string): Promise<boolean> {
+  try {
+    const s = createClient();
+    const { data } = await s.from("admin_users").select("user_id").eq("user_id", userId).single();
+    return !!data;
+  } catch { return false; }
+}
+
+export async function adminGetAllUsers() {
+  const s = createClient();
+  const { data } = await s.from("profiles").select("*").order("created_at", { ascending: false });
+  return data ?? [];
+}
+
+export async function adminGetAllShops() {
+  const s = createClient();
+  const { data } = await s.from("shops").select("*").order("id");
+  return data ?? [];
+}
+
+export async function adminGetAllConversations() {
+  const s = createClient();
+  const { data } = await s
+    .from("conversations")
+    .select("*, messages(count)")
+    .order("last_message_at", { ascending: false });
+  return data ?? [];
+}
