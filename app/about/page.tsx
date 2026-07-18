@@ -160,7 +160,7 @@ export default function AboutPage() {
             {[
               { v: lang === "ar" ? "٦٠٠+" : "600+", l: lang === "ar" ? "ورشة مضافة" : "Workshops listed" },
               { v: lang === "ar" ? "١٣" : "13",     l: lang === "ar" ? "تخصص" : "Specialisations" },
-              { v: lang === "ar" ? "٢٠٢٥" : "2025", l: lang === "ar" ? "سنة التأسيس" : "Founded" },
+              { v: lang === "ar" ? "٢٠٢٦" : "2026", l: lang === "ar" ? "سنة التأسيس" : "Founded" },
               { v: lang === "ar" ? "مجاناً" : "Free", l: lang === "ar" ? "خلال البيتا" : "During beta" },
             ].map(s => (
               <div key={s.l}>
@@ -182,12 +182,10 @@ export default function AboutPage() {
             {tr.aboutContactBody}
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
-            <a href="mailto:hello@warsha.eg" style={{
+            <a href="mailto:Warsha.Finder@gmail.com" style={{
               fontSize: 14, fontWeight: 600, color: "var(--accent)", textDecoration: "none",
-            }}>📧 hello@warsha.eg</a>
-            <a href="https://wa.me/201000000000" target="_blank" rel="noreferrer" style={{
-              fontSize: 14, fontWeight: 600, color: "var(--accent)", textDecoration: "none",
-            }}>💬 WhatsApp</a>
+            }}>📧 Warsha.Finder@gmail.com</a>
+
           </div>
           <div style={{ marginTop: 32 }}>
             <Link href="/list-shop" className="warsha-btn-primary"
