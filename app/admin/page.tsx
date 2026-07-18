@@ -1,11 +1,34 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { getCurrentUser, adminGetAllUsers, adminGetAllShops, adminGetAllConversations, isAdmin } from "../lib/supabase";
+import { getCurrentUser, isAdmin, createClient } from "../lib/supabase";
 
 const ADMIN_EMAIL = "tkelite2004@gmail.com";
-
 type Tab = "overview" | "users" | "shops" | "messages";
+
+async function adminGetAllUsers() {
+  const s = createClient();
+  const { data } = await s
+    .from("admin_users_view")
+    .select("*")
+    .order("created_at", { ascending: false });
+  return data ?? [];
+}
+
+async function adminGetAllShops() {
+  const s = createClient();
+  const { data } = await s.from("shops").select("*").order("id");
+  return data ?? [];
+}
+
+async function adminGetAllConversations() {
+  const s = createClient();
+  const { data } = await s
+    .from("conversations")
+    .select("*")
+    .order("last_message_at", { ascending: false });
+  return data ?? [];
+}
 
 export default function AdminPage() {
   const [user, setUser] = useState<any>(null);
@@ -37,10 +60,7 @@ export default function AdminPage() {
 
   if (loading) return (
     <div style={{ minHeight:"100vh", background:"#080807", display:"flex", alignItems:"center", justifyContent:"center" }}>
-      <div style={{ textAlign:"center" }}>
-        <div style={{ width:40, height:40, borderRadius:"50%", border:"3px solid #E8730A", borderTopColor:"transparent", margin:"0 auto 12px", animation:"spin 1s linear infinite" }} />
-        <p style={{ fontSize:12, color:"#555" }}>Verifying access...</p>
-      </div>
+      <div style={{ width:36, height:36, borderRadius:"50%", border:"3px solid #E8730A", borderTopColor:"transparent", animation:"spin 1s linear infinite" }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
@@ -49,19 +69,17 @@ export default function AdminPage() {
     <div style={{ minHeight:"100vh", background:"#080807", display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:16 }}>
       <div style={{ fontSize:56 }}>🚫</div>
       <p style={{ color:"#555", fontSize:15, margin:0 }}>Access denied</p>
-      <p style={{ color:"#333", fontSize:12, margin:0 }}>This page is restricted</p>
-      <Link href="/" style={{ color:"#E8730A", fontSize:13, textDecoration:"none", marginTop:8 }}>← Go home</Link>
+      <Link href="/" style={{ color:"#E8730A", fontSize:13, textDecoration:"none" }}>← Go home</Link>
     </div>
   );
 
   const carOwners = users.filter(u => !u.role || u.role === "car_owner");
   const shopOwners = users.filter(u => u.role === "shop_owner");
 
-  const statCard = (val: string|number, lbl: string, color="#E8730A", sub?: string) => (
+  const statCard = (val: string|number, lbl: string, color="#E8730A") => (
     <div key={lbl} style={{ background:"#111110", border:"1px solid #1e1e1c", borderRadius:16, padding:"22px 24px" }}>
       <div style={{ fontSize:32, fontWeight:900, color, letterSpacing:"-0.02em" }}>{val}</div>
       <div style={{ fontSize:12, color:"#666", marginTop:6, fontWeight:600 }}>{lbl}</div>
-      {sub && <div style={{ fontSize:11, color:"#444", marginTop:3 }}>{sub}</div>}
     </div>
   );
 
@@ -73,7 +91,11 @@ export default function AdminPage() {
   );
 
   const roleBadge = (role: string) => (
-    <span style={{ fontSize:11, padding:"2px 9px", borderRadius:99, fontWeight:700, background:role==="shop_owner"?"rgba(16,185,129,.1)":"rgba(59,130,246,.1)", color:role==="shop_owner"?"#10B981":"#60A5FA", border:`1px solid ${role==="shop_owner"?"rgba(16,185,129,.2)":"rgba(59,130,246,.2)"}` }}>
+    <span style={{ fontSize:11, padding:"2px 9px", borderRadius:99, fontWeight:700,
+      background:role==="shop_owner"?"rgba(16,185,129,.1)":"rgba(59,130,246,.1)",
+      color:role==="shop_owner"?"#10B981":"#60A5FA",
+      border:`1px solid ${role==="shop_owner"?"rgba(16,185,129,.2)":"rgba(59,130,246,.2)"}`
+    }}>
       {role==="shop_owner"?"Shop owner":"Car owner"}
     </span>
   );
@@ -85,8 +107,8 @@ export default function AdminPage() {
       <nav style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 28px", height:56, borderBottom:"1px solid #141412", background:"#0b0b0a", position:"sticky", top:0, zIndex:50 }}>
         <div style={{ display:"flex", alignItems:"center", gap:12 }}>
           <div style={{ width:30, height:30, borderRadius:8, background:"#E8730A", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:14, color:"#fff" }}>W</div>
-          <span style={{ fontWeight:800, fontSize:15, color:"#fff" }}>WarshaFinder</span>
-          <span style={{ fontSize:11, color:"#E8730A", fontWeight:700, padding:"2px 10px", borderRadius:99, background:"rgba(232,115,10,.1)", border:"1px solid rgba(232,115,10,.2)" }}>ADMIN PANEL</span>
+          <span style={{ fontWeight:800, fontSize:15, color:"#fff" }}>Warsha.eg</span>
+          <span style={{ fontSize:11, color:"#E8730A", fontWeight:700, padding:"2px 10px", borderRadius:99, background:"rgba(232,115,10,.1)", border:"1px solid rgba(232,115,10,.2)" }}>ADMIN</span>
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:16 }}>
           <span style={{ fontSize:12, color:"#555" }}>{user?.email}</span>
@@ -97,14 +119,14 @@ export default function AdminPage() {
       <div style={{ maxWidth:1100, margin:"0 auto", padding:"36px 28px" }}>
 
         {/* Tabs */}
-        <div style={{ display:"flex", gap:2, marginBottom:36, borderBottom:"1px solid #1a1a18", paddingBottom:0 }}>
+        <div style={{ display:"flex", gap:2, marginBottom:36, borderBottom:"1px solid #1a1a18" }}>
           {(["overview","users","shops","messages"] as Tab[]).map(t => (
             <button key={t} onClick={() => setTab(t)} style={{
               padding:"10px 20px", fontSize:13, fontWeight:600, fontFamily:"inherit",
               background:"transparent", border:"none", cursor:"pointer",
               color:tab===t?"#E8730A":"#555",
               borderBottom:tab===t?"2px solid #E8730A":"2px solid transparent",
-              marginBottom:-1, textTransform:"capitalize", letterSpacing:".01em",
+              marginBottom:-1, textTransform:"capitalize",
             }}>{t}</button>
           ))}
         </div>
@@ -125,17 +147,19 @@ export default function AdminPage() {
                   {statCard(convs.length, "Conversations", "#F59E0B")}
                 </div>
 
-                <h3 style={{ fontSize:15, fontWeight:700, color:"#fff", margin:"0 0 14px" }}>Latest users</h3>
+                <h3 style={{ fontSize:15, fontWeight:700, color:"#fff", margin:"0 0 14px" }}>Latest signups</h3>
                 <div style={{ background:"#111110", border:"1px solid #1e1e1c", borderRadius:14, overflow:"hidden" }}>
                   <table style={{ width:"100%", borderCollapse:"collapse" }}>
-                    <thead><tr><TH>Name</TH><TH>Role</TH><TH>Phone</TH><TH>Joined</TH></tr></thead>
+                    <thead><tr><TH>Name</TH><TH>Email</TH><TH>Role</TH><TH>Phone</TH><TH>Joined</TH><TH>Last seen</TH></tr></thead>
                     <tbody>
-                      {users.slice(0,8).map(u => (
+                      {users.slice(0,10).map((u:any) => (
                         <tr key={u.id}>
                           <TD>{u.full_name || "—"}</TD>
+                          <TD>{u.email}</TD>
                           <TD>{roleBadge(u.role ?? "car_owner")}</TD>
                           <TD muted>{u.phone || "—"}</TD>
                           <TD muted>{new Date(u.created_at).toLocaleDateString("en-GB")}</TD>
+                          <TD muted>{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("en-GB") : "—"}</TD>
                         </tr>
                       ))}
                     </tbody>
@@ -150,14 +174,16 @@ export default function AdminPage() {
                 <h2 style={{ fontSize:20, fontWeight:800, color:"#fff", margin:"0 0 24px" }}>All users ({users.length})</h2>
                 <div style={{ background:"#111110", border:"1px solid #1e1e1c", borderRadius:14, overflow:"hidden" }}>
                   <table style={{ width:"100%", borderCollapse:"collapse" }}>
-                    <thead><tr><TH>Name</TH><TH>Role</TH><TH>Phone</TH><TH>Joined</TH></tr></thead>
+                    <thead><tr><TH>Name</TH><TH>Email</TH><TH>Role</TH><TH>Phone</TH><TH>Joined</TH><TH>Last seen</TH></tr></thead>
                     <tbody>
-                      {users.map(u => (
+                      {users.map((u:any) => (
                         <tr key={u.id}>
                           <TD>{u.full_name || "—"}</TD>
+                          <TD><span style={{ fontSize:12, color:"#888" }}>{u.email}</span></TD>
                           <TD>{roleBadge(u.role ?? "car_owner")}</TD>
                           <TD muted>{u.phone || "—"}</TD>
                           <TD muted>{new Date(u.created_at).toLocaleDateString("en-GB")}</TD>
+                          <TD muted>{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("en-GB") : "—"}</TD>
                         </tr>
                       ))}
                     </tbody>
@@ -169,12 +195,12 @@ export default function AdminPage() {
             {/* SHOPS */}
             {tab==="shops" && (
               <div>
-                <h2 style={{ fontSize:20, fontWeight:800, color:"#fff", margin:"0 0 24px" }}>All shops in database ({shops.length})</h2>
+                <h2 style={{ fontSize:20, fontWeight:800, color:"#fff", margin:"0 0 24px" }}>All shops ({shops.length})</h2>
                 <div style={{ background:"#111110", border:"1px solid #1e1e1c", borderRadius:14, overflow:"hidden" }}>
                   <table style={{ width:"100%", borderCollapse:"collapse" }}>
                     <thead><tr><TH>ID</TH><TH>Name</TH><TH>Category</TH><TH>Area</TH><TH>Rating</TH><TH>Phone</TH></tr></thead>
                     <tbody>
-                      {shops.map((s: any) => (
+                      {shops.map((s:any) => (
                         <tr key={s.id}>
                           <TD muted>#{s.id}</TD>
                           <TD>{s.name}</TD>
@@ -195,13 +221,13 @@ export default function AdminPage() {
               <div>
                 <h2 style={{ fontSize:20, fontWeight:800, color:"#fff", margin:"0 0 24px" }}>Conversations ({convs.length})</h2>
                 {convs.length === 0 ? (
-                  <div style={{ textAlign:"center", padding:"60px 0", color:"#444", fontSize:14 }}>No conversations yet</div>
+                  <div style={{ textAlign:"center", padding:"60px 0", color:"#444" }}>No conversations yet</div>
                 ) : (
                   <div style={{ background:"#111110", border:"1px solid #1e1e1c", borderRadius:14, overflow:"hidden" }}>
                     <table style={{ width:"100%", borderCollapse:"collapse" }}>
                       <thead><tr><TH>Conv ID</TH><TH>Shop ID</TH><TH>Last message</TH><TH>Date</TH></tr></thead>
                       <tbody>
-                        {convs.map((c: any) => (
+                        {convs.map((c:any) => (
                           <tr key={c.id}>
                             <TD muted>#{c.id}</TD>
                             <TD muted>#{c.shop_id}</TD>
