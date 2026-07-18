@@ -58,7 +58,7 @@ function ChatInner() {
         const conv = await getOrCreateConversation(u.id, Number(shopIdParam));
         if (conv) {
           setActiveConvId(conv.id);
-          setConversations(prev => prev.find(c => c.id === conv.id) ? prev : [conv, ...prev]);
+          setConversations(prev => prev.find((c:any) => c.id === conv.id) ? prev : [conv, ...prev]);
         }
       } else if (convs.length > 0) {
         setActiveConvId(convs[0].id);
@@ -73,12 +73,16 @@ function ChatInner() {
     inputRef.current?.focus();
   }, [activeConvId]);
 
+  // FIX: wrap subscribeToMessages in a sync function so useEffect cleanup works
   useEffect(() => {
     if (!activeConvId) return;
-    const unsub = subscribeToMessages(activeConvId, msg => {
-      setMessages(prev => prev.find(m => m.id === msg.id) ? prev : [...prev, msg]);
+    let unsub: (() => void) | undefined;
+    const sub = subscribeToMessages(activeConvId, (msg: any) => {
+      setMessages(prev => prev.find((m:any) => m.id === msg.id) ? prev : [...prev, msg]);
     });
-    return unsub;
+    // subscribeToMessages returns a cleanup function
+    unsub = sub as unknown as () => void;
+    return () => { if (unsub) unsub(); };
   }, [activeConvId]);
 
   useEffect(() => {
@@ -92,7 +96,7 @@ function ChatInner() {
     setInput("");
     const tempId = Date.now();
     setMessages(prev => [...prev, { id: tempId, sender_id: user.id, content, created_at: new Date().toISOString(), temp: true }]);
-    setConversations(prev => prev.map(c => c.id === activeConvId ? { ...c, last_message: content, last_message_at: new Date().toISOString() } : c));
+    setConversations(prev => prev.map((c:any) => c.id === activeConvId ? { ...c, last_message: content, last_message_at: new Date().toISOString() } : c));
     await sendMessage(activeConvId, user.id, content);
     setSending(false);
     inputRef.current?.focus();
@@ -105,9 +109,10 @@ function ChatInner() {
     </div>
   );
 
-  const activeConv = conversations.find(c => c.id === activeConvId);
+  const activeConv = conversations.find((c:any) => c.id === activeConvId);
   const activeShop = activeConv ? SHOPS.find(s => s.id === activeConv.shop_id) : null;
   const activeShopCat = activeShop ? CATEGORIES.find(c => c.id === activeShop.category) : null;
+  const isDark = theme === "dark";
 
   return (
     <div dir={dir} style={{ height:"100vh", display:"flex", flexDirection:"column", background:"var(--bg)", color:"var(--text-primary)" }}>
@@ -115,13 +120,8 @@ function ChatInner() {
 
       <div style={{ flex:1, display:"flex", overflow:"hidden", minHeight:0 }}>
 
-        {/* ── Sidebar ── */}
-        <div style={{
-          width:300, flexShrink:0, display:"flex", flexDirection:"column",
-          borderInlineEnd:"1px solid var(--border)",
-          background:"var(--bg-card)",
-        }}>
-          {/* Header */}
+        {/* Sidebar */}
+        <div style={{ width:300, flexShrink:0, display:"flex", flexDirection:"column", borderInlineEnd:"1px solid var(--border)", background:"var(--bg-card)" }}>
           <div style={{ padding:"18px 18px 14px", borderBottom:"1px solid var(--border)" }}>
             <h2 style={{ fontSize:16, fontWeight:800, color:"var(--text-primary)", margin:0 }}>
               {lang==="ar" ? "رسائلي" : "Messages"}
@@ -131,7 +131,6 @@ function ChatInner() {
             </p>
           </div>
 
-          {/* Conversation list */}
           <div style={{ flex:1, overflowY:"auto" }}>
             {conversations.length === 0 ? (
               <div style={{ padding:"36px 20px", textAlign:"center" }}>
@@ -143,24 +142,22 @@ function ChatInner() {
                   {lang==="ar" ? "تصفح الورش ←" : "Browse workshops →"}
                 </Link>
               </div>
-            ) : conversations.map(conv => {
+            ) : conversations.map((conv:any) => {
               const shop = SHOPS.find(s => s.id === conv.shop_id);
               const cat = shop ? CATEGORIES.find(c => c.id === shop.category) : null;
               const isActive = conv.id === activeConvId;
               return (
                 <button key={conv.id} onClick={() => setActiveConvId(conv.id)} style={{
                   width:"100%", textAlign:dir==="rtl"?"right":"left", direction:dir,
-                  padding:"14px 18px",
-                  background:isActive?"rgba(232,115,10,.07)":"transparent",
+                  padding:"14px 18px", background:isActive?"rgba(232,115,10,.07)":"transparent",
                   border:"none", borderBottom:"1px solid var(--border)",
                   borderInlineStart:isActive?"3px solid #E8730A":"3px solid transparent",
                   cursor:"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", gap:12,
-                  transition:"background .15s",
                 }}
                   onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = "var(--bg-secondary)"; }}
                   onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
                 >
-                  <div style={{ width:40, height:40, borderRadius:"50%", background:`rgba(232,115,10,.1)`, border:"1px solid rgba(232,115,10,.2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>
+                  <div style={{ width:40, height:40, borderRadius:"50%", background:"rgba(232,115,10,.1)", border:"1px solid rgba(232,115,10,.2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>
                     {cat?.icon ?? "🔧"}
                   </div>
                   <div style={{ flex:1, minWidth:0 }}>
@@ -177,14 +174,13 @@ function ChatInner() {
           </div>
         </div>
 
-        {/* ── Chat area ── */}
+        {/* Chat area */}
         <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden", minWidth:0 }}>
-
           {activeConvId && activeShop ? (
             <>
-              {/* Chat header */}
+              {/* Header */}
               <div style={{ padding:"14px 22px", borderBottom:"1px solid var(--border)", background:"var(--bg-card)", display:"flex", alignItems:"center", gap:14, direction:dir }}>
-                <div style={{ width:44, height:44, borderRadius:"50%", background:`rgba(232,115,10,.1)`, border:"1px solid rgba(232,115,10,.2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>
+                <div style={{ width:44, height:44, borderRadius:"50%", background:"rgba(232,115,10,.1)", border:"1px solid rgba(232,115,10,.2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>
                   {activeShopCat?.icon ?? "🔧"}
                 </div>
                 <div style={{ flex:1, minWidth:0 }}>
@@ -194,7 +190,7 @@ function ChatInner() {
                     {activeShopCat && <span style={{ marginInlineStart:8, color:"#E8730A", fontWeight:600 }}>· {lang==="ar" ? activeShopCat.ar : activeShopCat.en}</span>}
                   </div>
                 </div>
-                <Link href={`/shop/${activeShop.id}`} style={{ fontSize:12, color:"#E8730A", textDecoration:"none", fontWeight:600, flexShrink:0, padding:"6px 12px", borderRadius:8, border:"1px solid rgba(232,115,10,.3)", background:"rgba(232,115,10,.06)" }}>
+                <Link href={`/shop/${activeShop.id}`} style={{ fontSize:12, color:"#E8730A", textDecoration:"none", fontWeight:600, padding:"6px 12px", borderRadius:8, border:"1px solid rgba(232,115,10,.3)", background:"rgba(232,115,10,.06)", flexShrink:0 }}>
                   {lang==="ar" ? "عرض الورشة" : "View shop"}
                 </Link>
               </div>
@@ -212,31 +208,24 @@ function ChatInner() {
                     </p>
                   </div>
                 )}
-
                 <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                  {messages.map((msg, i) => {
+                  {messages.map((msg:any, i:number) => {
                     const isMe = msg.sender_id === user.id;
-                    const showTime = i === 0 || new Date(messages[i-1].created_at).getMinutes() !== new Date(msg.created_at).getMinutes();
                     return (
-                      <div key={msg.id ?? i}>
-                        {showTime && (
-                          <div style={{ textAlign:"center", fontSize:10, color:"var(--text-tertiary)", margin:"8px 0 4px" }}>
+                      <div key={msg.id ?? i} style={{ display:"flex", justifyContent:isMe?(dir==="rtl"?"flex-start":"flex-end"):(dir==="rtl"?"flex-end":"flex-start") }}>
+                        <div style={{
+                          maxWidth:"72%", padding:"11px 15px", borderRadius:18,
+                          borderBottomRightRadius: isMe && dir!=="rtl" ? 4 : 18,
+                          borderBottomLeftRadius: isMe && dir==="rtl" ? 4 : 18,
+                          background: isMe ? "#E8730A" : "var(--bg-card)",
+                          color: isMe ? "#fff" : "var(--text-primary)",
+                          border: isMe ? "none" : "1px solid var(--border)",
+                          fontSize:14, lineHeight:1.6, opacity:msg.temp?0.7:1,
+                          boxShadow: isMe ? "0 2px 8px rgba(232,115,10,.25)" : "0 1px 4px rgba(0,0,0,.06)",
+                        }}>
+                          {msg.content}
+                          <div style={{ fontSize:10, opacity:0.6, marginTop:4, textAlign:dir==="rtl"?"left":"right" }}>
                             {new Date(msg.created_at).toLocaleTimeString(lang==="ar"?"ar-EG":"en-GB", { hour:"2-digit", minute:"2-digit" })}
-                          </div>
-                        )}
-                        <div style={{ display:"flex", justifyContent:isMe?(dir==="rtl"?"flex-start":"flex-end"):(dir==="rtl"?"flex-end":"flex-start") }}>
-                          <div style={{
-                            maxWidth:"72%", padding:"11px 15px", borderRadius:18,
-                            borderBottomRightRadius: isMe && dir!=="rtl" ? 4 : 18,
-                            borderBottomLeftRadius: isMe && dir==="rtl" ? 4 : 18,
-                            background: isMe ? "#E8730A" : "var(--bg-card)",
-                            color: isMe ? "#fff" : "var(--text-primary)",
-                            border: isMe ? "none" : "1px solid var(--border)",
-                            fontSize:14, lineHeight:1.6,
-                            opacity: msg.temp ? 0.7 : 1,
-                            boxShadow: isMe ? "0 2px 8px rgba(232,115,10,.25)" : "0 1px 4px rgba(0,0,0,.06)",
-                          }}>
-                            {msg.content}
                           </div>
                         </div>
                       </div>
@@ -248,44 +237,26 @@ function ChatInner() {
 
               {/* Input */}
               <div style={{ padding:"14px 22px 18px", borderTop:"1px solid var(--border)", background:"var(--bg-card)" }}>
-                <div style={{ display:"flex", gap:10, alignItems:"flex-end" }}>
-                  <div style={{
-                    flex:1, display:"flex", alignItems:"center",
-                    padding:"12px 16px", borderRadius:14,
-                    background:"var(--bg-secondary)",
-                    border:"1.5px solid var(--border-strong)",
-                    transition:"border-color .2s",
-                  }}
-                    onFocus={() => {}}
-                  >
-                    <input
-                      ref={inputRef}
-                      type="text" value={input}
-                      onChange={e => setInput(e.target.value)}
-                      onKeyDown={e => e.key==="Enter" && !e.shiftKey && handleSend()}
-                      placeholder={lang==="ar" ? "اكتب رسالتك هنا..." : "Type your message..."}
-                      style={{ flex:1, background:"transparent", border:"none", outline:"none", color:"var(--text-primary)", fontSize:14, fontFamily:"inherit", direction:dir, textAlign:dir==="rtl"?"right":"left" }}
-                    />
-                  </div>
+                <div style={{ display:"flex", gap:10, alignItems:"center" }}>
+                  <input
+                    ref={inputRef}
+                    type="text" value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyDown={e => e.key==="Enter" && !e.shiftKey && handleSend()}
+                    placeholder={lang==="ar" ? "اكتب رسالتك هنا..." : "Type your message..."}
+                    style={{ flex:1, padding:"12px 16px", borderRadius:14, background:"var(--bg-secondary)", border:"1.5px solid var(--border-strong)", outline:"none", color:"var(--text-primary)", fontSize:14, fontFamily:"inherit", direction:dir, textAlign:dir==="rtl"?"right":"left" }}
+                    onFocus={e => (e.target as HTMLInputElement).style.borderColor = "#E8730A"}
+                    onBlur={e => (e.target as HTMLInputElement).style.borderColor = "var(--border-strong)"}
+                  />
                   <button onClick={handleSend} disabled={!input.trim() || sending}
-                    style={{
-                      width:48, height:48, borderRadius:14, flexShrink:0,
-                      background: input.trim() && !sending ? "#E8730A" : "var(--bg-secondary)",
-                      border:"none", cursor:input.trim()&&!sending?"pointer":"not-allowed",
-                      display:"flex", alignItems:"center", justifyContent:"center",
-                      transition:"all .15s",
-                      boxShadow: input.trim() && !sending ? "0 2px 10px rgba(232,115,10,.3)" : "none",
-                    }}>
+                    style={{ width:48, height:48, borderRadius:14, flexShrink:0, background:input.trim()&&!sending?"#E8730A":"var(--bg-secondary)", border:"none", cursor:input.trim()&&!sending?"pointer":"not-allowed", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:input.trim()&&!sending?"0 2px 10px rgba(232,115,10,.3)":"none", transition:"all .15s" }}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={input.trim()&&!sending?"#fff":"var(--text-tertiary)"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      {dir==="rtl"
-                        ? <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
-                        : <path d="M2 2l20 7-9 4-4 9-7-20zM22 2L11 13"/>
-                      }
+                      <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
                     </svg>
                   </button>
                 </div>
                 <p style={{ fontSize:10, color:"var(--text-tertiary)", margin:"8px 0 0", textAlign:"center" }}>
-                  {lang==="ar" ? "رسائلك محمية ومشفرة داخل المنصة" : "Your messages are encrypted and secure within the platform"}
+                  {lang==="ar" ? "🔒 رسائلك محمية داخل المنصة" : "🔒 Your messages are secure within the platform"}
                 </p>
               </div>
             </>
@@ -295,10 +266,7 @@ function ChatInner() {
               <p style={{ fontSize:16, fontWeight:700, color:"var(--text-primary)", margin:0 }}>
                 {lang==="ar" ? "اختار محادثة" : "Select a conversation"}
               </p>
-              <p style={{ fontSize:13, color:"var(--text-tertiary)", margin:0, textAlign:"center" }}>
-                {lang==="ar" ? "أو تصفح الورش وابدأ محادثة جديدة" : "Or browse workshops to start a new conversation"}
-              </p>
-              <Link href="/workshops" style={{ padding:"10px 24px", borderRadius:10, background:"#E8730A", color:"#fff", fontSize:13, fontWeight:700, textDecoration:"none", fontFamily:"inherit", marginTop:4 }}>
+              <Link href="/workshops" style={{ padding:"10px 24px", borderRadius:10, background:"#E8730A", color:"#fff", fontSize:13, fontWeight:700, textDecoration:"none", fontFamily:"inherit" }}>
                 {lang==="ar" ? "تصفح الورش" : "Browse workshops"}
               </Link>
             </div>
