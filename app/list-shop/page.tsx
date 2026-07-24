@@ -4,35 +4,28 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import { t, CATEGORIES, SHOPS, type Lang } from "../lib/translations";
+import { createClient } from "../lib/supabase";
 
 function useThemeAndLang() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [lang, setLang]   = useState<Lang>("ar");
   const [mounted, setMounted] = useState(false);
-
   useEffect(() => {
     const savedTheme = (localStorage.getItem("warsha-theme") as "dark" | "light") || "dark";
     const savedLang  = (localStorage.getItem("warsha-lang")  as Lang) || "ar";
-    setTheme(savedTheme);
-    setLang(savedLang);
-    setMounted(true);
+    setTheme(savedTheme); setLang(savedLang); setMounted(true);
   }, []);
-
   const toggleTheme = useCallback(() => {
     const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    localStorage.setItem("warsha-theme", next);
+    setTheme(next); localStorage.setItem("warsha-theme", next);
     document.documentElement.setAttribute("data-theme", next);
   }, [theme]);
-
   const toggleLang = useCallback(() => {
     const next: Lang = lang === "ar" ? "en" : "ar";
-    setLang(next);
-    localStorage.setItem("warsha-lang", next);
+    setLang(next); localStorage.setItem("warsha-lang", next);
     document.documentElement.setAttribute("lang", next);
     document.documentElement.setAttribute("dir", next === "ar" ? "rtl" : "ltr");
   }, [lang]);
-
   return { theme, lang, toggleTheme, toggleLang, mounted };
 }
 
@@ -46,19 +39,18 @@ const BENEFITS = {
     { icon: "👁️", title: "ظهور أمام آلاف العملاء", body: "عملاء بيدوروا على نفس خدمتك كل يوم — سهّل عليهم يلاقوك." },
     { icon: "📍", title: "ظهور على الخريطة",       body: "ورشتك هتبان على الخريطة التفاعلية عند البحث في منطقتك." },
     { icon: "⭐", title: "نظام تقييمات حقيقي",    body: "العملاء يقدروا يقيّموا ورشتك — اللي بيعمل كويس بيتميز." },
-    { icon: "💬", title: "تواصل مباشر واتساب",    body: "العملاء يتواصلوا معاك مباشرة من غير وسيط." },
+    { icon: "💬", title: "تواصل مباشر داخل المنصة", body: "العملاء يتواصلوا معاك مباشرة من غير وسيط." },
     { icon: "🆓", title: "مجاناً خلال البيتا",   body: "الانضمام مجاني خلال الفترة التجريبية — مش هتدفع حاجة دلوقتي." },
   ],
   en: [
-    { icon: "👁️", title: "Reach thousands of customers", body: "Customers searching for your exact service every day — make it easy for them to find you." },
-    { icon: "📍", title: "Appear on the map",             body: "Your shop shows up on the interactive map when people search in your area." },
-    { icon: "⭐", title: "Real review system",            body: "Customers can rate your shop — quality work gets recognised." },
-    { icon: "💬", title: "Direct WhatsApp contact",       body: "Customers reach you directly with no middleman." },
-    { icon: "🆓", title: "Free during beta",              body: "Joining is completely free during the beta period — no fees right now." },
+    { icon: "👁️", title: "Visibility to thousands", body: "Customers searching for your service every day — make it easy for them to find you." },
+    { icon: "📍", title: "On the map",              body: "Your shop appears on the interactive map when people search your area." },
+    { icon: "⭐", title: "Real ratings system",     body: "Customers can rate your shop — the best ones stand out." },
+    { icon: "💬", title: "Direct messaging",        body: "Customers contact you directly through the platform." },
+    { icon: "🆓", title: "Free during beta",        body: "Joining is free during the beta period — no payment needed now." },
   ],
 };
 
-// Show the last 6 real shops as recently listed providers
 const RECENT_SHOPS = SHOPS.slice(-6);
 
 export default function ListShopPage() {
@@ -70,15 +62,39 @@ export default function ListShopPage() {
     name: "", owner: "", phone: "", area: "", category: "", desc: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function handleChange(field: string, val: string) {
     setForm(prev => ({ ...prev, [field]: val }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // In production this will call Supabase — for now just show success
-    setSubmitted(true);
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      const s = createClient();
+      const { error: dbError } = await s.from("shop_requests").insert({
+        name: form.name,
+        owner: form.owner,
+        phone: form.phone,
+        area: form.area,
+        category: form.category,
+        description: form.desc,
+        status: "pending",
+      });
+
+      if (dbError) throw dbError;
+      setSubmitted(true);
+    } catch (err: any) {
+      setError(lang === "ar"
+        ? "حصل خطأ، حاول تاني أو تواصل معنا مباشرة"
+        : "Something went wrong, please try again or contact us directly");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (!mounted) return null;
@@ -104,45 +120,25 @@ export default function ListShopPage() {
     <div dir={dir} style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--text-primary)" }}>
       <Navbar lang={lang} theme={theme} onToggleLang={toggleLang} onToggleTheme={toggleTheme} />
 
-      {/* ── Hero ── */}
-      <section style={{
-        padding: "52px 24px 36px",
-        background: "var(--bg-secondary)",
-        borderBottom: "1px solid var(--border)",
-        textAlign: "center",
-      }}>
+      {/* Hero */}
+      <section style={{ padding: "52px 24px 36px", background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)", textAlign: "center" }}>
         <div style={{ maxWidth: 640, margin: "0 auto" }}>
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            padding: "5px 14px", borderRadius: 99, marginBottom: 18,
-            background: "var(--accent-muted)", border: "1px solid var(--accent-border)",
-            color: "var(--accent)", fontSize: 13,
-          }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 99, marginBottom: 18, background: "var(--accent-muted)", border: "1px solid var(--accent-border)", color: "var(--accent)", fontSize: 13 }}>
             🆓 {tr.formNote}
           </div>
-          <h1 style={{ fontSize: 28, fontWeight: 900, color: "var(--text-primary)", margin: "0 0 10px" }}>
-            {tr.listShopTitle}
-          </h1>
-          <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: 0, lineHeight: 1.8 }}>
-            {tr.listShopSubtitle}
-          </p>
+          <h1 style={{ fontSize: 28, fontWeight: 900, color: "var(--text-primary)", margin: "0 0 10px" }}>{tr.listShopTitle}</h1>
+          <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: 0, lineHeight: 1.8 }}>{tr.listShopSubtitle}</p>
         </div>
       </section>
 
-      {/* ── Benefits ── */}
+      {/* Benefits */}
       <section style={{ padding: "40px 24px", borderBottom: "1px solid var(--border)" }}>
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <h2 style={{ fontSize: 18, fontWeight: 800, color: "var(--text-primary)", margin: "0 0 20px", textAlign: "center" }}>
-            {tr.listShopBenefits}
-          </h2>
+          <h2 style={{ fontSize: 18, fontWeight: 800, color: "var(--text-primary)", margin: "0 0 20px", textAlign: "center" }}>{tr.listShopBenefits}</h2>
           <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))" }}>
             {benefits.map((b, i) => (
-              <div key={i} style={{
-                padding: 18, borderRadius: "var(--radius-lg)",
-                background: "var(--bg-card)", border: "1px solid var(--border)",
-                textAlign: "center",
-              }}>
-                <div style={{ fontSize: 24, marginBottom: 10 }} aria-hidden="true">{b.icon}</div>
+              <div key={i} style={{ padding: 18, borderRadius: "var(--radius-lg)", background: "var(--bg-card)", border: "1px solid var(--border)", textAlign: "center" }}>
+                <div style={{ fontSize: 24, marginBottom: 10 }}>{b.icon}</div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", marginBottom: 6 }}>{b.title}</div>
                 <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.65 }}>{b.body}</div>
               </div>
@@ -151,29 +147,33 @@ export default function ListShopPage() {
         </div>
       </section>
 
-      {/* ── Registration form + listings (side by side on desktop) ── */}
+      {/* Form + Recent listings */}
       <section style={{ padding: "40px 24px 60px" }}>
         <div style={{ maxWidth: 1000, margin: "0 auto", display: "grid", gap: 28, gridTemplateColumns: "minmax(0,1.1fr) minmax(0,0.9fr)" }}>
 
-          {/* ── Form ── */}
-          <div style={{
-            background: "var(--bg-card)", border: "1px solid var(--border)",
-            borderRadius: "var(--radius-xl)", padding: "28px 28px",
-          }}>
-            <h2 style={{ fontSize: 17, fontWeight: 800, color: "var(--text-primary)", margin: "0 0 22px" }}>
-              {tr.listShopFormTitle}
-            </h2>
+          {/* Form */}
+          <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-xl)", padding: "28px" }}>
+            <h2 style={{ fontSize: 17, fontWeight: 800, color: "var(--text-primary)", margin: "0 0 22px" }}>{tr.listShopFormTitle}</h2>
 
             {submitted ? (
-              <div style={{
-                padding: "24px 20px", borderRadius: "var(--radius-lg)", textAlign: "center",
-                background: "var(--accent-muted)", border: "1px solid var(--accent-border)",
-              }}>
-                <div style={{ fontSize: 32, marginBottom: 12 }}>🎉</div>
-                <p style={{ fontSize: 14, fontWeight: 700, color: "var(--accent)", margin: 0 }}>{tr.formSuccess}</p>
+              <div style={{ padding: "32px 20px", borderRadius: "var(--radius-lg)", textAlign: "center", background: "var(--accent-muted)", border: "1px solid var(--accent-border)" }}>
+                <div style={{ fontSize: 40, marginBottom: 14 }}>🎉</div>
+                <p style={{ fontSize: 15, fontWeight: 700, color: "var(--accent)", margin: "0 0 8px" }}>{tr.formSuccess}</p>
+                <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>
+                  {lang === "ar"
+                    ? "استلمنا طلبك وهنتواصل معاك على رقمك خلال ٢٤ ساعة."
+                    : "We received your request and will contact you within 24 hours."}
+                </p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+                {error && (
+                  <div style={{ padding: "10px 14px", borderRadius: "var(--radius-md)", background: "rgba(239,68,68,.08)", border: "1px solid rgba(239,68,68,.25)", color: "#EF4444", fontSize: 13 }}>
+                    {error}
+                  </div>
+                )}
+
                 <div>
                   <label style={labelStyle}>{tr.formName} *</label>
                   <input required value={form.name} onChange={e => handleChange("name", e.target.value)}
@@ -183,6 +183,7 @@ export default function ListShopPage() {
                     onBlur={e => (e.target as HTMLInputElement).style.borderColor = "var(--border)"}
                   />
                 </div>
+
                 <div>
                   <label style={labelStyle}>{tr.formOwner} *</label>
                   <input required value={form.owner} onChange={e => handleChange("owner", e.target.value)}
@@ -192,6 +193,7 @@ export default function ListShopPage() {
                     onBlur={e => (e.target as HTMLInputElement).style.borderColor = "var(--border)"}
                   />
                 </div>
+
                 <div>
                   <label style={labelStyle}>{tr.formPhone} *</label>
                   <input required type="tel" value={form.phone} onChange={e => handleChange("phone", e.target.value)}
@@ -201,110 +203,86 @@ export default function ListShopPage() {
                     onBlur={e => (e.target as HTMLInputElement).style.borderColor = "var(--border)"}
                   />
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                  <div>
-                    <label style={labelStyle}>{tr.formArea} *</label>
-                    <input required value={form.area} onChange={e => handleChange("area", e.target.value)}
-                      placeholder={lang === "ar" ? "مثلاً: مدينتي" : "e.g. Madinaty"}
-                      style={inputStyle}
-                      onFocus={e => (e.target as HTMLInputElement).style.borderColor = "var(--accent)"}
-                      onBlur={e => (e.target as HTMLInputElement).style.borderColor = "var(--border)"}
-                    />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>{tr.formCategory} *</label>
-                    <select required value={form.category} onChange={e => handleChange("category", e.target.value)}
-                      style={{ ...inputStyle, cursor: "pointer" }}
-                      onFocus={e => (e.target as HTMLSelectElement).style.borderColor = "var(--accent)"}
-                      onBlur={e => (e.target as HTMLSelectElement).style.borderColor = "var(--border)"}
-                    >
-                      <option value="">{lang === "ar" ? "اختار..." : "Choose..."}</option>
-                      {CATEGORIES.map(c => (
-                        <option key={c.id} value={c.id}>{lang === "ar" ? c.ar : c.en}</option>
-                      ))}
-                    </select>
-                  </div>
+
+                <div>
+                  <label style={labelStyle}>{tr.formArea} *</label>
+                  <input required value={form.area} onChange={e => handleChange("area", e.target.value)}
+                    placeholder={lang === "ar" ? "مثلاً: مدينتي، القاهرة الجديدة" : "e.g. Madinaty, New Cairo"}
+                    style={inputStyle}
+                    onFocus={e => (e.target as HTMLInputElement).style.borderColor = "var(--accent)"}
+                    onBlur={e => (e.target as HTMLInputElement).style.borderColor = "var(--border)"}
+                  />
                 </div>
+
+                <div>
+                  <label style={labelStyle}>{tr.formCategory} *</label>
+                  <select required value={form.category} onChange={e => handleChange("category", e.target.value)}
+                    style={{ ...inputStyle, cursor: "pointer" }}>
+                    <option value="">{lang === "ar" ? "اختار التخصص" : "Select category"}</option>
+                    {CATEGORIES.map(cat => (
+                      <option key={cat.id} value={cat.id}>{lang === "ar" ? cat.ar : cat.en}</option>
+                    ))}
+                  </select>
+                </div>
+
                 <div>
                   <label style={labelStyle}>{tr.formDesc}</label>
                   <textarea value={form.desc} onChange={e => handleChange("desc", e.target.value)}
+                    placeholder={lang === "ar" ? "اوصف خدماتك باختصار..." : "Briefly describe your services..."}
                     rows={3}
-                    placeholder={lang === "ar" ? "وصف مختصر عن الورشة وخدماتها..." : "Brief description of your shop and services..."}
-                    style={{ ...inputStyle, resize: "vertical" }}
+                    style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6 }}
                     onFocus={e => (e.target as HTMLTextAreaElement).style.borderColor = "var(--accent)"}
                     onBlur={e => (e.target as HTMLTextAreaElement).style.borderColor = "var(--border)"}
                   />
                 </div>
-                <button type="submit" className="warsha-btn-primary"
-                  style={{ padding: "12px 0", fontSize: 14, fontFamily: "inherit", width: "100%", marginTop: 4 }}>
-                  {tr.formSubmit}
+
+                <button type="submit" disabled={submitting}
+                  className="warsha-btn-primary"
+                  style={{ padding: "13px 0", fontSize: 14, fontFamily: "inherit", width: "100%", opacity: submitting ? 0.6 : 1, marginTop: 4 }}>
+                  {submitting
+                    ? (lang === "ar" ? "جاري الإرسال..." : "Submitting...")
+                    : tr.formSubmit}
                 </button>
+
                 <p style={{ fontSize: 11, color: "var(--text-tertiary)", textAlign: "center", margin: 0 }}>
-                  {tr.formNote}
+                  {lang === "ar" ? "بإرسال الطلب، سيتم مراجعته والتواصل معك خلال ٢٤ ساعة" : "By submitting, we'll review your request and contact you within 24 hours"}
                 </p>
               </form>
             )}
           </div>
 
-          {/* ── Recently listed shops ── */}
+          {/* Recent listings */}
           <div>
-            <h2 style={{ fontSize: 17, fontWeight: 800, color: "var(--text-primary)", margin: "0 0 6px" }}>
-              {tr.listingsTitle}
-            </h2>
-            <p style={{ fontSize: 13, color: "var(--text-tertiary)", margin: "0 0 16px" }}>
-              {tr.listingsSubtitle}
-            </p>
+            <h2 style={{ fontSize: 17, fontWeight: 800, color: "var(--text-primary)", margin: "0 0 16px" }}>{tr.listingsTitle}</h2>
+            <p style={{ fontSize: 13, color: "var(--text-tertiary)", margin: "0 0 20px" }}>{tr.listingsSubtitle}</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {RECENT_SHOPS.map(shop => {
                 const cat = CATEGORIES.find(c => c.id === shop.category);
                 const rgb = hexRgb(cat?.accent ?? "#888");
                 return (
-                  <Link key={shop.id} href={`/shop/${shop.id}`}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 12,
-                      padding: "12px 14px", borderRadius: "var(--radius-md)",
-                      background: "var(--bg-card)", border: "1px solid var(--border)",
-                      textDecoration: "none", direction: dir,
-                      transition: "border-color .2s, transform .15s",
-                    }}
-                    onMouseEnter={e => {
-                      (e.currentTarget as HTMLAnchorElement).style.borderColor = `rgba(${rgb},.3)`;
-                      (e.currentTarget as HTMLAnchorElement).style.transform = "translateX(" + (dir === "rtl" ? "-2px" : "2px") + ")";
-                    }}
-                    onMouseLeave={e => {
-                      (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--border)";
-                      (e.currentTarget as HTMLAnchorElement).style.transform = "translateX(0)";
-                    }}
+                  <Link key={shop.id} href={`/shop/${shop.id}`} style={{
+                    display: "flex", alignItems: "center", gap: 12, padding: "14px 16px",
+                    borderRadius: "var(--radius-lg)", background: "var(--bg-card)",
+                    border: "1px solid var(--border)", textDecoration: "none", transition: "all .15s",
+                  }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = `rgba(${rgb},.4)`; (e.currentTarget as HTMLAnchorElement).style.transform = "translateX(3px)"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLAnchorElement).style.transform = "translateX(0)"; }}
                   >
-                    <div style={{
-                      width: 36, height: 36, borderRadius: 8, fontSize: 16, flexShrink: 0,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      background: `rgba(${rgb},.1)`, border: `1px solid rgba(${rgb},.22)`,
-                    }} aria-hidden="true">{cat?.icon}</div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {shop.name}
-                      </div>
-                      <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 2 }}>
-                        {shop.area[lang]} · {lang === "ar" ? cat?.ar : cat?.en}
-                      </div>
+                    <div style={{ width: 38, height: 38, borderRadius: 10, background: `rgba(${rgb},.1)`, border: `1px solid rgba(${rgb},.22)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
+                      {cat?.icon ?? "🔧"}
                     </div>
-                    <div style={{ fontSize: 12, color: "var(--text-secondary)", flexShrink: 0 }}>
-                      <span style={{ color: "var(--accent)" }}>★</span> {shop.rating}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shop.name}</div>
+                      <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 2 }}>📍 {shop.area[lang]}</div>
+                    </div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", flexShrink: 0 }}>
+                      <span style={{ color: "#F59E0B" }}>★</span> {shop.rating}
                     </div>
                   </Link>
                 );
               })}
             </div>
-            <div style={{ marginTop: 16, textAlign: "center" }}>
-              <Link href="/workshops" style={{
-                fontSize: 13, color: "var(--accent)", textDecoration: "none", fontWeight: 600,
-              }}>
-                {lang === "ar" ? "عرض كل الورش ←" : "View all workshops →"}
-              </Link>
-            </div>
           </div>
-
         </div>
       </section>
 
