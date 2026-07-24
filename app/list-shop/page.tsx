@@ -75,6 +75,7 @@ export default function ListShopPage() {
     setError(null);
 
     try {
+      // 1. Save to Supabase
       const s = createClient();
       const { error: dbError } = await s.from("shop_requests").insert({
         name: form.name,
@@ -87,6 +88,21 @@ export default function ListShopPage() {
       });
 
       if (dbError) throw dbError;
+
+      // 2. Fire email notification (non-blocking — don't fail if email fails)
+      fetch("/api/notify-shop-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          owner: form.owner,
+          phone: form.phone,
+          area: form.area,
+          category: form.category,
+          description: form.desc,
+        }),
+      }).catch(() => {});
+
       setSubmitted(true);
     } catch (err: any) {
       setError(lang === "ar"
@@ -159,10 +175,23 @@ export default function ListShopPage() {
               <div style={{ padding: "32px 20px", borderRadius: "var(--radius-lg)", textAlign: "center", background: "var(--accent-muted)", border: "1px solid var(--accent-border)" }}>
                 <div style={{ fontSize: 40, marginBottom: 14 }}>🎉</div>
                 <p style={{ fontSize: 15, fontWeight: 700, color: "var(--accent)", margin: "0 0 8px" }}>{tr.formSuccess}</p>
-                <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: 0 }}>
+                <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 16px" }}>
                   {lang === "ar"
-                    ? "استلمنا طلبك وهنتواصل معاك على رقمك خلال ٢٤ ساعة."
-                    : "We received your request and will contact you within 24 hours."}
+                    ? "استلمنا طلبك! بعت لينا صور الورشة على الإيميل علشان نقدر نراجع الطلب."
+                    : "We received your request! Please send us photos of your shop so we can review it."}
+                </p>
+                
+                  href={`mailto:Warsha.Finder@gmail.com?subject=Shop photos — ${form.name}&body=Hi, I just submitted a listing request for ${form.name}. Please find attached photos of my shop.`}
+                  style={{
+                    display: "inline-block", padding: "10px 22px",
+                    background: "var(--accent)", color: "#fff", borderRadius: 10,
+                    fontSize: 13, fontWeight: 700, textDecoration: "none",
+                  }}
+                >
+                  📷 {lang === "ar" ? "ابعت صور الورشة" : "Send shop photos"}
+                </a>
+                <p style={{ fontSize: 11, color: "var(--text-tertiary)", margin: "12px 0 0" }}>
+                  Warsha.Finder@gmail.com
                 </p>
               </div>
             ) : (
