@@ -73,9 +73,7 @@ export default function ListShopPage() {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
-
     try {
-      // 1. Save to Supabase
       const s = createClient();
       const { error: dbError } = await s.from("shop_requests").insert({
         name: form.name,
@@ -86,23 +84,15 @@ export default function ListShopPage() {
         description: form.desc,
         status: "pending",
       });
-
       if (dbError) throw dbError;
-
-      // 2. Fire email notification (non-blocking — don't fail if email fails)
       fetch("/api/notify-shop-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: form.name,
-          owner: form.owner,
-          phone: form.phone,
-          area: form.area,
-          category: form.category,
-          description: form.desc,
+          name: form.name, owner: form.owner, phone: form.phone,
+          area: form.area, category: form.category, description: form.desc,
         }),
       }).catch(() => {});
-
       setSubmitted(true);
     } catch (err: any) {
       setError(lang === "ar"
@@ -188,7 +178,7 @@ export default function ListShopPage() {
                     fontSize: 13, fontWeight: 700, textDecoration: "none",
                   }}
                 >
-                  📷 {lang === "ar" ? "ابعت صور الورشة" : "Send shop photos"}
+                  {lang === "ar" ? "ابعت صور الورشة" : "Send shop photos"}
                 </a>
                 <p style={{ fontSize: 11, color: "var(--text-tertiary)", margin: "12px 0 0" }}>
                   Warsha.Finder@gmail.com
@@ -196,13 +186,11 @@ export default function ListShopPage() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-
                 {error && (
                   <div style={{ padding: "10px 14px", borderRadius: "var(--radius-md)", background: "rgba(239,68,68,.08)", border: "1px solid rgba(239,68,68,.25)", color: "#EF4444", fontSize: 13 }}>
                     {error}
                   </div>
                 )}
-
                 <div>
                   <label style={labelStyle}>{tr.formName} *</label>
                   <input required value={form.name} onChange={e => handleChange("name", e.target.value)}
@@ -212,7 +200,6 @@ export default function ListShopPage() {
                     onBlur={e => (e.target as HTMLInputElement).style.borderColor = "var(--border)"}
                   />
                 </div>
-
                 <div>
                   <label style={labelStyle}>{tr.formOwner} *</label>
                   <input required value={form.owner} onChange={e => handleChange("owner", e.target.value)}
@@ -222,7 +209,6 @@ export default function ListShopPage() {
                     onBlur={e => (e.target as HTMLInputElement).style.borderColor = "var(--border)"}
                   />
                 </div>
-
                 <div>
                   <label style={labelStyle}>{tr.formPhone} *</label>
                   <input required type="tel" value={form.phone} onChange={e => handleChange("phone", e.target.value)}
@@ -232,7 +218,6 @@ export default function ListShopPage() {
                     onBlur={e => (e.target as HTMLInputElement).style.borderColor = "var(--border)"}
                   />
                 </div>
-
                 <div>
                   <label style={labelStyle}>{tr.formArea} *</label>
                   <input required value={form.area} onChange={e => handleChange("area", e.target.value)}
@@ -242,7 +227,6 @@ export default function ListShopPage() {
                     onBlur={e => (e.target as HTMLInputElement).style.borderColor = "var(--border)"}
                   />
                 </div>
-
                 <div>
                   <label style={labelStyle}>{tr.formCategory} *</label>
                   <select required value={form.category} onChange={e => handleChange("category", e.target.value)}
@@ -253,7 +237,6 @@ export default function ListShopPage() {
                     ))}
                   </select>
                 </div>
-
                 <div>
                   <label style={labelStyle}>{tr.formDesc}</label>
                   <textarea value={form.desc} onChange={e => handleChange("desc", e.target.value)}
@@ -264,15 +247,11 @@ export default function ListShopPage() {
                     onBlur={e => (e.target as HTMLTextAreaElement).style.borderColor = "var(--border)"}
                   />
                 </div>
-
                 <button type="submit" disabled={submitting}
                   className="warsha-btn-primary"
                   style={{ padding: "13px 0", fontSize: 14, fontFamily: "inherit", width: "100%", opacity: submitting ? 0.6 : 1, marginTop: 4 }}>
-                  {submitting
-                    ? (lang === "ar" ? "جاري الإرسال..." : "Submitting...")
-                    : tr.formSubmit}
+                  {submitting ? (lang === "ar" ? "جاري الإرسال..." : "Submitting...") : tr.formSubmit}
                 </button>
-
                 <p style={{ fontSize: 11, color: "var(--text-tertiary)", textAlign: "center", margin: 0 }}>
                   {lang === "ar" ? "بإرسال الطلب، سيتم مراجعته والتواصل معك خلال ٢٤ ساعة" : "By submitting, we'll review your request and contact you within 24 hours"}
                 </p>
