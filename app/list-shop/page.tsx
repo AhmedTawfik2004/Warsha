@@ -171,7 +171,7 @@ export default function ListShopPage() {
                     : "We received your request! Please send us photos of your shop so we can review it."}
                 </p>
                 
-                  href={`mailto:Warsha.Finder@gmail.com?subject=Shop photos — ${form.name}&body=Hi, I just submitted a listing request for ${form.name}. Please find attached photos of my shop.`}
+                  <a href={`mailto:Warsha.Finder@gmail.com?subject=Shop photos — ${form.name}&body=Hi, I just submitted a listing request for ${form.name}. Please find attached photos of my shop.`}
                   style={{
                     display: "inline-block", padding: "10px 22px",
                     background: "var(--accent)", color: "#fff", borderRadius: 10,
