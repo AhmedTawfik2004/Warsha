@@ -268,7 +268,7 @@ export default function Navbar({ lang, theme, onToggleLang, onToggleTheme }: Nav
               <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)}
                 style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 0", fontSize: 16, fontWeight: pathname === item.href ? 700 : 400, color: pathname === item.href ? "#E8730A" : textPrimary, textDecoration: "none", borderBottom: `1px solid ${borderColor}` }}>
                 {item.label}
-                <span style={{ color: textTertiary, fontSize: 14 }}>{dir === "rtl" ? "←" : "→"}</span>
+                <span style={{ color: isDark ? "rgba(255,255,255,.35)" : "rgba(0,0,0,.35)", fontSize: 14 }}>{dir === "rtl" ? "←" : "→"}</span>
               </Link>
             ))}
           </div>

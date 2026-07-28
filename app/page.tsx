@@ -247,7 +247,7 @@ export default function HomePage() {
 
           <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
             {FEATURED_SHOPS.map(shop => {
-              const cat = CATEGORIES.find(c => c.id === shop.category);
+              const cat = CATEGORIES.find(c => c.id === (shop as any).category);
               const rgb = hexRgb(cat?.accent ?? "#E8730A");
               return (
                 <div key={shop.id} style={{ background: cardBg, borderRadius: 18, border: `1px solid ${borderColor}`, padding: 20, transition: "all .18s" }}
