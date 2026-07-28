@@ -599,3 +599,38 @@ h1, h2, h3, h4, h5, h6 {
   .warsha-nav { padding: 0 16px; }
   .warsha-cat-card { min-height: 130px; padding: 16px; }
 }
+/* ─── RESPONSIVE NAV CLASSES ─────────────────────────────────────────────── */
+
+.warsha-desktop-nav {
+  display: flex;
+}
+
+.warsha-mobile-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .warsha-desktop-nav {
+    display: none !important;
+  }
+  .warsha-mobile-nav {
+    display: flex !important;
+  }
+}
+
+/* Hide scrollbar for category pills */
+.warsha-pills-scroll {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.warsha-pills-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* iOS safe area support */
+@supports (-webkit-touch-callout: none) {
+  .warsha-mobile-bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+}
