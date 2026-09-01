@@ -36,18 +36,18 @@ function hexRgb(hex: string) {
 
 const BENEFITS = {
   ar: [
-    { title: "ظهور أمام آلاف العملاء", body: "عملاء بيدوروا على نفس خدمتك كل يوم — سهّل عليهم يلاقوك." },
-    { title: "ظهور على الخريطة",       body: "ورشتك هتبان على الخريطة التفاعلية عند البحث في منطقتك." },
-    { title: "نظام تقييمات حقيقي",    body: "العملاء يقدروا يقيّموا ورشتك — اللي بيعمل كويس بيتميز." },
-    { title: "تواصل مباشر",           body: "العملاء يتواصلوا معاك مباشرة من غير وسيط." },
-    { title: "مجاناً خلال البيتا",   body: "الانضمام مجاني خلال الفترة التجريبية." },
+    { title: "ظهور أمام آلاف العملاء", body: "عملاء بيدوروا على نفس خدمتك كل يوم." },
+    { title: "ظهور على الخريطة", body: "ورشتك هتبان على الخريطة التفاعلية." },
+    { title: "نظام تقييمات حقيقي", body: "العملاء يقدروا يقيّموا ورشتك." },
+    { title: "تواصل مباشر", body: "العملاء يتواصلوا معاك من غير وسيط." },
+    { title: "مجاناً خلال البيتا", body: "الانضمام مجاني خلال الفترة التجريبية." },
   ],
   en: [
-    { title: "Visibility to thousands", body: "Customers searching for your service every day — make it easy for them to find you." },
-    { title: "On the map",              body: "Your shop appears on the interactive map when people search your area." },
-    { title: "Real ratings system",     body: "Customers can rate your shop — the best ones stand out." },
-    { title: "Direct messaging",        body: "Customers contact you directly through the platform." },
-    { title: "Free during beta",        body: "Joining is free during the beta period — no payment needed now." },
+    { title: "Visibility to thousands", body: "Customers searching for your service every day." },
+    { title: "On the map", body: "Your shop appears on the interactive map." },
+    { title: "Real ratings system", body: "Customers can rate your shop." },
+    { title: "Direct messaging", body: "Customers contact you directly." },
+    { title: "Free during beta", body: "Joining is free during the beta period." },
   ],
 };
 
@@ -57,12 +57,12 @@ export default function ListShopPage() {
   const { theme, lang, toggleTheme, toggleLang, mounted } = useThemeAndLang();
   const tr = t[lang];
   const dir = lang === "ar" ? "rtl" : "ltr";
-  const isDark = theme === "dark";
 
   const [form, setForm] = useState({ name: "", owner: "", phone: "", area: "", category: "", desc: "" });
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [photoEmailHref, setPhotoEmailHref] = useState("");
 
   function handleChange(field: string, val: string) {
     setForm(prev => ({ ...prev, [field]: val }));
@@ -84,6 +84,10 @@ export default function ListShopPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: form.name, owner: form.owner, phone: form.phone, area: form.area, category: form.category, description: form.desc }),
       }).catch(() => {});
+      setPhotoEmailHref(
+        "mailto:Warsha.Finder@gmail.com?subject=Shop photos - " + form.name +
+        "&body=Hi, I just submitted a listing request for " + form.name + ". Please find attached photos of my shop."
+      );
       setSubmitted(true);
     } catch {
       setError(lang === "ar" ? "حصل خطأ، حاول تاني" : "Something went wrong, please try again");
@@ -119,12 +123,16 @@ export default function ListShopPage() {
           <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 14px", borderRadius: 99, marginBottom: 16, background: "var(--accent-muted)", border: "1px solid var(--accent-border)", color: "var(--accent)", fontSize: 12, fontWeight: 600 }}>
             {tr.formNote}
           </span>
-          <h1 style={{ fontSize: "clamp(22px, 5vw, 30px)", fontWeight: 800, color: "var(--text-primary)", margin: "0 0 10px", letterSpacing: "-0.02em" }}>{tr.listShopTitle}</h1>
-          <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: 0, lineHeight: 1.7 }}>{tr.listShopSubtitle}</p>
+          <h1 style={{ fontSize: "clamp(22px, 5vw, 30px)", fontWeight: 800, color: "var(--text-primary)", margin: "0 0 10px", letterSpacing: "-0.02em" }}>
+            {tr.listShopTitle}
+          </h1>
+          <p style={{ fontSize: 14, color: "var(--text-secondary)", margin: 0, lineHeight: 1.7 }}>
+            {tr.listShopSubtitle}
+          </p>
         </div>
       </section>
 
-      {/* Benefits — horizontal scroll on mobile */}
+      {/* Benefits */}
       <section style={{ padding: "24px 0", borderBottom: "1px solid var(--border)", overflowX: "auto" }}>
         <div style={{ display: "flex", gap: 12, padding: "0 20px", minWidth: "max-content" }}>
           {BENEFITS[lang].map((b, i) => (
@@ -136,31 +144,37 @@ export default function ListShopPage() {
         </div>
       </section>
 
-      {/* Main content — stacked on mobile */}
+      {/* Main */}
       <section style={{ padding: "28px 20px 80px" }}>
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
           <div style={{ display: "grid", gap: 24, gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)" }} className="warsha-list-grid">
 
-            {/* Form */}
+            {/* Form card */}
             <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 20, padding: "24px 20px" }}>
-              <h2 style={{ fontSize: 17, fontWeight: 800, color: "var(--text-primary)", margin: "0 0 20px" }}>{tr.listShopFormTitle}</h2>
+              <h2 style={{ fontSize: 17, fontWeight: 800, color: "var(--text-primary)", margin: "0 0 20px" }}>
+                {tr.listShopFormTitle}
+              </h2>
 
               {submitted ? (
                 <div style={{ padding: "28px 16px", borderRadius: 14, textAlign: "center", background: "var(--accent-muted)", border: "1px solid var(--accent-border)" }}>
-                  <div style={{ fontSize: 36, marginBottom: 12 }}>✓</div>
-                  <p style={{ fontSize: 15, fontWeight: 700, color: "var(--accent)", margin: "0 0 8px" }}>{tr.formSuccess}</p>
+                  <div style={{ fontSize: 36, marginBottom: 12, color: "var(--accent)" }}>{"✓"}</div>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: "var(--accent)", margin: "0 0 8px" }}>
+                    {tr.formSuccess}
+                  </p>
                   <p style={{ fontSize: 13, color: "var(--text-secondary)", margin: "0 0 20px", lineHeight: 1.6 }}>
                     {lang === "ar"
-                      ? "استلمنا طلبك! ابعتلنا صور الورشة على الإيميل علشان نراجع الطلب."
-                      : "We received your request! Please send us photos of your shop so we can review it."}
+                      ? "استلمنا طلبك! ابعتلنا صور الورشة على الإيميل."
+                      : "We received your request! Please send us photos of your shop."}
                   </p>
                   
-                    href={`mailto:Warsha.Finder@gmail.com?subject=Shop photos — ${form.name}&body=Hi, I just submitted a listing request for ${form.name}. Please find attached photos of my shop.`}
+                    href={photoEmailHref}
                     style={{ display: "inline-block", padding: "11px 24px", background: "var(--accent)", color: "#fff", borderRadius: 10, fontSize: 13, fontWeight: 700, textDecoration: "none" }}
                   >
                     {lang === "ar" ? "ابعت صور الورشة" : "Send shop photos"}
                   </a>
-                  <p style={{ fontSize: 11, color: "var(--text-tertiary)", margin: "12px 0 0" }}>Warsha.Finder@gmail.com</p>
+                  <p style={{ fontSize: 11, color: "var(--text-tertiary)", margin: "12px 0 0" }}>
+                    Warsha.Finder@gmail.com
+                  </p>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -169,22 +183,47 @@ export default function ListShopPage() {
                       {error}
                     </div>
                   )}
-                  {[
-                    { field: "name",  label: tr.formName,  placeholder: lang === "ar" ? "مثلاً: كراج أحمد الميكانيكي" : "e.g. Ahmed's Garage", type: "text" },
-                    { field: "owner", label: tr.formOwner, placeholder: lang === "ar" ? "اسمك الكامل" : "Your full name", type: "text" },
-                    { field: "phone", label: tr.formPhone, placeholder: "01xxxxxxxxx", type: "tel" },
-                    { field: "area",  label: tr.formArea,  placeholder: lang === "ar" ? "مثلاً: مدينتي" : "e.g. Madinaty", type: "text" },
-                  ].map(f => (
-                    <div key={f.field}>
-                      <label style={labelStyle}>{f.label} *</label>
-                      <input required type={f.type} value={(form as any)[f.field]} onChange={e => handleChange(f.field, e.target.value)}
-                        placeholder={f.placeholder}
-                        style={{ ...inputStyle, direction: f.field === "phone" ? "ltr" : dir, textAlign: f.field === "phone" ? "left" : (dir === "rtl" ? "right" : "left") }}
-                        onFocus={e => (e.target as HTMLInputElement).style.borderColor = "var(--accent)"}
-                        onBlur={e => (e.target as HTMLInputElement).style.borderColor = "var(--border)"}
-                      />
-                    </div>
-                  ))}
+
+                  <div>
+                    <label style={labelStyle}>{tr.formName} *</label>
+                    <input required type="text" value={form.name} onChange={e => handleChange("name", e.target.value)}
+                      placeholder={lang === "ar" ? "مثلاً: كراج أحمد الميكانيكي" : "e.g. Ahmed's Garage"}
+                      style={inputStyle}
+                      onFocus={e => (e.target as HTMLInputElement).style.borderColor = "var(--accent)"}
+                      onBlur={e => (e.target as HTMLInputElement).style.borderColor = "var(--border)"}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>{tr.formOwner} *</label>
+                    <input required type="text" value={form.owner} onChange={e => handleChange("owner", e.target.value)}
+                      placeholder={lang === "ar" ? "اسمك الكامل" : "Your full name"}
+                      style={inputStyle}
+                      onFocus={e => (e.target as HTMLInputElement).style.borderColor = "var(--accent)"}
+                      onBlur={e => (e.target as HTMLInputElement).style.borderColor = "var(--border)"}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>{tr.formPhone} *</label>
+                    <input required type="tel" value={form.phone} onChange={e => handleChange("phone", e.target.value)}
+                      placeholder="01xxxxxxxxx"
+                      style={{ ...inputStyle, direction: "ltr", textAlign: "left" }}
+                      onFocus={e => (e.target as HTMLInputElement).style.borderColor = "var(--accent)"}
+                      onBlur={e => (e.target as HTMLInputElement).style.borderColor = "var(--border)"}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>{tr.formArea} *</label>
+                    <input required type="text" value={form.area} onChange={e => handleChange("area", e.target.value)}
+                      placeholder={lang === "ar" ? "مثلاً: مدينتي" : "e.g. Madinaty"}
+                      style={inputStyle}
+                      onFocus={e => (e.target as HTMLInputElement).style.borderColor = "var(--accent)"}
+                      onBlur={e => (e.target as HTMLInputElement).style.borderColor = "var(--border)"}
+                    />
+                  </div>
+
                   <div>
                     <label style={labelStyle}>{tr.formCategory} *</label>
                     <select required value={form.category} onChange={e => handleChange("category", e.target.value)}
@@ -195,6 +234,7 @@ export default function ListShopPage() {
                       ))}
                     </select>
                   </div>
+
                   <div>
                     <label style={labelStyle}>{tr.formDesc}</label>
                     <textarea value={form.desc} onChange={e => handleChange("desc", e.target.value)}
@@ -205,12 +245,14 @@ export default function ListShopPage() {
                       onBlur={e => (e.target as HTMLTextAreaElement).style.borderColor = "var(--border)"}
                     />
                   </div>
+
                   <button type="submit" disabled={submitting} className="warsha-btn-primary"
                     style={{ padding: "14px 0", fontSize: 15, fontFamily: "inherit", width: "100%", opacity: submitting ? 0.6 : 1, marginTop: 4, borderRadius: 12 }}>
                     {submitting ? (lang === "ar" ? "جاري الإرسال..." : "Submitting...") : tr.formSubmit}
                   </button>
+
                   <p style={{ fontSize: 11, color: "var(--text-tertiary)", textAlign: "center", margin: 0 }}>
-                    {lang === "ar" ? "سيتم مراجعة الطلب والتواصل معك خلال ٢٤ ساعة" : "We'll review your request and contact you within 24 hours"}
+                    {lang === "ar" ? "سيتم مراجعة الطلب والتواصل معك خلال ٢٤ ساعة" : "We'll review and contact you within 24 hours"}
                   </p>
                 </form>
               )}
@@ -218,29 +260,33 @@ export default function ListShopPage() {
 
             {/* Recent listings */}
             <div>
-              <h2 style={{ fontSize: 16, fontWeight: 800, color: "var(--text-primary)", margin: "0 0 6px" }}>{tr.listingsTitle}</h2>
-              <p style={{ fontSize: 13, color: "var(--text-tertiary)", margin: "0 0 16px" }}>{tr.listingsSubtitle}</p>
+              <h2 style={{ fontSize: 16, fontWeight: 800, color: "var(--text-primary)", margin: "0 0 6px" }}>
+                {tr.listingsTitle}
+              </h2>
+              <p style={{ fontSize: 13, color: "var(--text-tertiary)", margin: "0 0 16px" }}>
+                {tr.listingsSubtitle}
+              </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {RECENT_SHOPS.map(shop => {
                   const cat = CATEGORIES.find(c => c.id === (shop as any).category);
                   const rgb = hexRgb(cat?.accent ?? "#2D6A6F");
                   return (
-                    <Link key={shop.id} href={`/shop/${shop.id}`} style={{
+                    <Link key={shop.id} href={"/shop/" + shop.id} style={{
                       display: "flex", alignItems: "center", gap: 12, padding: "14px 16px",
                       borderRadius: 14, background: "var(--bg-card)", border: "1px solid var(--border)",
                       textDecoration: "none", transition: "all .15s",
                     }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = `rgba(${rgb},.4)`; (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(-2px)"; }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(" + rgb + ",.4)"; (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(-2px)"; }}
                       onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(0)"; }}
                     >
-                      <div style={{ width: 36, height: 36, borderRadius: 10, background: `rgba(${rgb},.1)`, border: `1px solid rgba(${rgb},.2)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(" + rgb + ",.1)", border: "1px solid rgba(" + rgb + ",.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
                         {cat?.icon ?? "🔧"}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{shop.name}</div>
                         <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 2 }}>{shop.area[lang]}</div>
                       </div>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: "#F59E0B", flexShrink: 0 }}>★ {shop.rating}</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "#F59E0B", flexShrink: 0 }}>{"★ " + shop.rating}</span>
                     </Link>
                   );
                 })}
@@ -253,19 +299,9 @@ export default function ListShopPage() {
       <footer style={{ padding: "20px", textAlign: "center", fontSize: 12, color: "var(--text-tertiary)", borderTop: "1px solid var(--border)" }}>
         {tr.footerCopy}
       </footer>
-
-      {/* Mobile bottom spacer */}
-      <div className="warsha-mobile-nav" style={{ display: "none", height: 72 }} />
-
       <style>{`
-        /* Stack form and listings on mobile */
         @media (max-width: 680px) {
-          .warsha-list-grid {
-            grid-template-columns: 1fr !important;
-          }
-        }
-        @media (max-width: 768px) {
-          .warsha-mobile-nav { display: block !important; }
+          .warsha-list-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </div>
