@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type CSSProperties, type FormEvent } from "react";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import { t, CATEGORIES, SHOPS, type Lang } from "../lib/translations";
@@ -68,7 +68,7 @@ export default function ListShopPage() {
     setForm(prev => ({ ...prev, [field]: val }));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
@@ -84,12 +84,15 @@ export default function ListShopPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: form.name, owner: form.owner, phone: form.phone, area: form.area, category: form.category, description: form.desc }),
       }).catch(() => {});
+      const shopName = form.name.trim();
       setPhotoEmailHref(
-        "mailto:Warsha.Finder@gmail.com?subject=Shop photos - " + form.name +
-        "&body=Hi, I just submitted a listing request for " + form.name + ". Please find attached photos of my shop."
+        `mailto:Warsha.Finder@gmail.com?subject=${encodeURIComponent(`Shop photos - ${shopName}`)}&body=${encodeURIComponent(
+          `Hi, I just submitted a listing request for ${shopName}. Please find attached photos of my shop.`
+        )}`
       );
       setSubmitted(true);
-    } catch {
+    } catch (err) {
+      console.error("Shop request submission failed:", err);
       setError(lang === "ar" ? "حصل خطأ، حاول تاني" : "Something went wrong, please try again");
     } finally {
       setSubmitting(false);
@@ -98,7 +101,7 @@ export default function ListShopPage() {
 
   if (!mounted) return null;
 
-  const inputStyle: React.CSSProperties = {
+  const inputStyle: CSSProperties = {
     width: "100%", padding: "12px 14px",
     background: "var(--bg-secondary)", border: "1.5px solid var(--border)",
     borderRadius: "var(--radius-md)", color: "var(--text-primary)",
@@ -108,7 +111,7 @@ export default function ListShopPage() {
     WebkitAppearance: "none",
   };
 
-  const labelStyle: React.CSSProperties = {
+  const labelStyle: CSSProperties = {
     display: "block", fontSize: 12, fontWeight: 600,
     color: "var(--text-secondary)", marginBottom: 6,
   };
@@ -167,6 +170,7 @@ export default function ListShopPage() {
                       : "We received your request! Please send us photos of your shop."}
                   </p>
                   
+                  <a
                     href={photoEmailHref}
                     style={{ display: "inline-block", padding: "11px 24px", background: "var(--accent)", color: "#fff", borderRadius: 10, fontSize: 13, fontWeight: 700, textDecoration: "none" }}
                   >
