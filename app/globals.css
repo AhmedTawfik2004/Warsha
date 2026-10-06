@@ -1,72 +1,51 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ==========================================================================
-   WARSHA — GLOBAL DESIGN SYSTEM
-   Egyptian automotive workshop finder
-   Dark-first premium garage aesthetic
-   ========================================================================== */
-
-/* --------------------------------------------------------------------------
-   DESIGN TOKENS
-   -------------------------------------------------------------------------- */
+/* ─── DESIGN TOKENS ──────────────────────────────────────────────────────────
+   Warsha — Egyptian automotive marketplace
+   Design direction: Petrol Teal, Sage, and warm neutral automotive aesthetic.
+   Deep forest-black surfaces, warm ivory light mode, sharp type, subtle glows.
+   Signature: Category cards with a teal accent glow on hover.
+────────────────────────────────────────────────────────────────────────────── */
 
 :root {
-  /* Brand */
-  --accent: #F07823;
-  --accent-hover: #FF8C35;
-  --accent-deep: #C85E0A;
+  /* Brand — Petrol Teal & Sage */
+  --accent:          #6E7F77;
+  --accent-hover:    #214E4F;
+  --accent-deep:     #8C8A83;
+  --accent-muted:    rgba(110, 127, 119, 0.12);
+  --accent-muted-lg: rgba(110, 127, 119, 0.07);
+  --accent-border:   rgba(110, 127, 119, 0.34);
+  --accent-glow:     rgba(110, 127, 119, 0.20);
 
-  --accent-muted: rgba(240, 120, 35, 0.10);
-  --accent-muted-lg: rgba(240, 120, 35, 0.06);
-  --accent-border: rgba(240, 120, 35, 0.30);
-  --accent-glow: rgba(240, 120, 35, 0.18);
+  /* Light mode surfaces — Sand / Warm Neutral */
+  --bg:              #FAF7F2;
+  --bg-secondary:    #F0ECE4;
+  --bg-card:         #FAF7F2;
+  --bg-card-hover:   #F0ECE4;
+  --bg-overlay:      rgba(250, 247, 242, 0.90);
 
-  /* Light mode */
-  --bg: #F5F4F2;
-  --bg-secondary: #ECEAE6;
-  --bg-card: #FFFFFF;
-  --bg-card-hover: #FAFAF8;
-  --bg-overlay: rgba(255, 255, 255, 0.88);
+  /* Light mode text */
+  --text-primary:    #231F1A;
+  --text-secondary:  #8C8A83;
+  --text-tertiary:   #8C8A83;
+  --text-inverse:    #FAF7F2;
 
-  /* Text */
-  --text-primary: #0F0E0D;
-  --text-secondary: #524F4C;
-  --text-tertiary: #9B9490;
-  --text-inverse: #FFFFFF;
-
-  /* Borders */
-  --border: rgba(0, 0, 0, 0.07);
-  --border-strong: rgba(0, 0, 0, 0.13);
-  --border-accent: rgba(240, 120, 35, 0.25);
+  /* Light mode borders */
+  --border:          rgba(214, 208, 196, 0.72);
+  --border-strong:   rgba(140, 138, 131, 0.35);
+  --border-accent:   rgba(110, 127, 119, 0.34);
 
   /* Shadows */
-  --shadow-xs:
-    0 1px 2px rgba(0, 0, 0, 0.05);
-
-  --shadow-sm:
-    0 1px 4px rgba(0, 0, 0, 0.06),
-    0 2px 8px rgba(0, 0, 0, 0.04);
-
-  --shadow-md:
-    0 4px 16px rgba(0, 0, 0, 0.08),
-    0 1px 4px rgba(0, 0, 0, 0.04);
-
-  --shadow-lg:
-    0 12px 40px rgba(0, 0, 0, 0.10),
-    0 2px 8px rgba(0, 0, 0, 0.05);
-
-  --shadow-xl:
-    0 24px 64px rgba(0, 0, 0, 0.12),
-    0 4px 16px rgba(0, 0, 0, 0.06);
-
-  --shadow-accent:
-    0 8px 32px rgba(240, 120, 35, 0.22),
-    0 2px 8px rgba(240, 120, 35, 0.14);
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.05);
+  --shadow-xl: 0 24px 64px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.06);
+  --shadow-accent: 0 8px 32px rgba(110,127,119,0.22), 0 2px 8px rgba(110,127,119,0.13);
 
   /* Radius */
   --radius-xs: 6px;
@@ -80,59 +59,65 @@
   /* Navigation */
   --nav-h: 62px;
 
-  /* Motion */
+  /* Transitions */
   --t-fast: 0.12s ease;
   --t-base: 0.22s ease;
   --t-slow: 0.35s ease;
 }
 
-/* --------------------------------------------------------------------------
-   DARK MODE
-   -------------------------------------------------------------------------- */
+/* ─── PALETTE HELPERS ─────────────────────────────────────────────────────── */
 
-[data-theme="dark"] {
-  --bg: #080807;
-  --bg-secondary: #111110;
-  --bg-card: #161514;
-  --bg-card-hover: #1C1B1A;
-  --bg-overlay: rgba(22, 21, 20, 0.92);
+:root {
+  --brand-dark: #0F1414;
+  --brand-slate: #1F2A2E;
+  --brand-teal: #214E4F;
+  --brand-sage: #6E7F77;
+  --brand-offwhite: #EAECE9;
 
-  --text-primary: #F0EDE8;
-  --text-secondary: #857F79;
-  --text-tertiary: #68625D;
-  --text-inverse: #0F0E0D;
-
-  --border: rgba(255, 255, 255, 0.06);
-  --border-strong: rgba(255, 255, 255, 0.11);
-  --border-accent: rgba(240, 120, 35, 0.22);
-
-  --shadow-xs:
-    0 1px 2px rgba(0, 0, 0, 0.50);
-
-  --shadow-sm:
-    0 1px 4px rgba(0, 0, 0, 0.50),
-    0 2px 8px rgba(0, 0, 0, 0.30);
-
-  --shadow-md:
-    0 4px 16px rgba(0, 0, 0, 0.60),
-    0 1px 4px rgba(0, 0, 0, 0.40);
-
-  --shadow-lg:
-    0 12px 40px rgba(0, 0, 0, 0.70),
-    0 2px 8px rgba(0, 0, 0, 0.50);
-
-  --shadow-xl:
-    0 24px 64px rgba(0, 0, 0, 0.80),
-    0 4px 16px rgba(0, 0, 0, 0.60);
-
-  --shadow-accent:
-    0 8px 32px rgba(240, 120, 35, 0.30),
-    0 2px 8px rgba(240, 120, 35, 0.20);
+  --sand-ivory: #FAF7F2;
+  --sand-beige: #F0ECE4;
+  --sand-stone: #D6D0C4;
+  --sand-taupe: #8C8A83;
+  --sand-espresso: #231F1A;
 }
 
-/* --------------------------------------------------------------------------
-   BASE RESET
-   -------------------------------------------------------------------------- */
+/* ─── DARK MODE ──────────────────────────────────────────────────────────────
+   Deep forest black with petrol-teal surfaces.
+────────────────────────────────────────────────────────────────────────────── */
+
+[data-theme="dark"] {
+  --accent:          #214E4F;
+  --accent-hover:    #6E7F77;
+  --accent-deep:     #1F2A2E;
+  --accent-muted:    rgba(33, 78, 79, 0.13);
+  --accent-muted-lg: rgba(33, 78, 79, 0.07);
+  --accent-border:   rgba(33, 78, 79, 0.45);
+  --accent-glow:     rgba(33, 78, 79, 0.22);
+
+  --bg:              #0F1414;
+  --bg-secondary:    #1F2A2E;
+  --bg-card:         #1F2A2E;
+  --bg-card-hover:   #214E4F;
+  --bg-overlay:      rgba(31, 42, 46, 0.92);
+
+  --text-primary:    #EAECE9;
+  --text-secondary:  #6E7F77;
+  --text-tertiary:   #6E7F77;
+  --text-inverse:    #0F1414;
+
+  --border:          rgba(234, 236, 233, 0.08);
+  --border-strong:   rgba(234, 236, 233, 0.14);
+  --border-accent:   rgba(33, 78, 79, 0.55);
+
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.5);
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.4);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.7), 0 2px 8px rgba(0,0,0,0.5);
+  --shadow-xl: 0 24px 64px rgba(0,0,0,0.8), 0 4px 16px rgba(0,0,0,0.6);
+  --shadow-accent: 0 8px 32px rgba(33,78,79,0.34), 0 2px 8px rgba(33,78,79,0.22);
+}
+
+/* ─── BASE ───────────────────────────────────────────────────────────────── */
 
 *,
 *::before,
@@ -147,113 +132,46 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  background: var(--bg);
-}
-
-html,
-body {
-  min-height: 100%;
 }
 
 body {
-  margin: 0;
   background-color: var(--bg);
   color: var(--text-primary);
-  line-height: 1.6;
   transition:
     background-color var(--t-slow),
     color var(--t-base);
+  min-height: 100vh;
+  line-height: 1.6;
 }
-
-/* --------------------------------------------------------------------------
-   LANGUAGE / DIRECTION
-   -------------------------------------------------------------------------- */
 
 [dir="rtl"] {
   font-family:
-    "Cairo",
-    "Segoe UI",
+    'Cairo',
+    'Segoe UI',
     system-ui,
     sans-serif;
-
   letter-spacing: 0;
 }
 
 [dir="ltr"] {
   font-family:
-    "Inter",
-    "Segoe UI",
+    'Inter',
+    'Segoe UI',
     system-ui,
     sans-serif;
-
   letter-spacing: -0.01em;
 }
 
-/* --------------------------------------------------------------------------
-   FORM CONTROLS
-   -------------------------------------------------------------------------- */
-
-button,
-input,
-textarea,
-select {
-  font: inherit;
-}
-
-button {
-  -webkit-tap-highlight-color: transparent;
-}
-
-input,
-textarea,
-select {
-  color: var(--text-primary);
-}
-
-select {
-  background-color: var(--bg-secondary);
-}
-
-select option {
-  background: var(--bg-card);
-  color: var(--text-primary);
-}
-
-input::placeholder,
-textarea::placeholder {
-  color: var(--text-tertiary);
-  opacity: 1;
-}
-
-/* --------------------------------------------------------------------------
-   LINKS
-   -------------------------------------------------------------------------- */
-
-a {
-  color: inherit;
-}
-
-a,
-button {
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* --------------------------------------------------------------------------
-   TEXT SELECTION
-   -------------------------------------------------------------------------- */
-
 ::selection {
-  background: rgba(240, 120, 35, 0.22);
+  background: var(--accent-muted);
   color: var(--text-primary);
 }
 
-/* --------------------------------------------------------------------------
-   SCROLLBAR
-   -------------------------------------------------------------------------- */
+/* ─── SCROLLBAR ───────────────────────────────────────────────────────────── */
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -269,15 +187,7 @@ button {
   background: var(--text-tertiary);
 }
 
-/* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-strong) transparent;
-}
-
-/* --------------------------------------------------------------------------
-   TYPOGRAPHY
-   -------------------------------------------------------------------------- */
+/* ─── TYPOGRAPHY ──────────────────────────────────────────────────────────── */
 
 h1,
 h2,
@@ -290,19 +200,7 @@ h6 {
   font-weight: 800;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-p {
-  margin-top: 0;
-}
-
-/* --------------------------------------------------------------------------
-   NAVIGATION
-   -------------------------------------------------------------------------- */
+/* ─── NAVIGATION ──────────────────────────────────────────────────────────── */
 
 .warsha-nav {
   position: sticky;
@@ -369,35 +267,16 @@ p {
 
 .warsha-nav-logo:hover .warsha-nav-logo-icon {
   transform: scale(1.05);
-  box-shadow:
-    0 12px 36px rgba(240, 120, 35, 0.35);
+  box-shadow: 0 12px 36px var(--accent-glow);
 }
 
-/* Desktop / mobile navigation */
-
-.warsha-desktop-nav {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.warsha-mobile-nav {
-  display: none;
-  align-items: center;
-  gap: 8px;
-}
-
-/* --------------------------------------------------------------------------
-   CARDS
-   -------------------------------------------------------------------------- */
+/* ─── CARDS ───────────────────────────────────────────────────────────────── */
 
 .warsha-card {
-  position: relative;
-  overflow: hidden;
-
   background: var(--bg-card);
 
   border: 1px solid var(--border);
+
   border-radius: var(--radius-lg);
 
   box-shadow: var(--shadow-sm);
@@ -407,24 +286,27 @@ p {
     box-shadow var(--t-base),
     transform var(--t-base),
     background var(--t-base);
+
+  position: relative;
+  overflow: hidden;
 }
 
 .warsha-card:hover {
   border-color: var(--border-accent);
   box-shadow: var(--shadow-md);
-
   transform: translateY(-3px);
-
   background: var(--bg-card-hover);
 }
 
-/* Accent border */
+/* Teal accent border on hover */
 
 .warsha-card::before {
   content: "";
 
   position: absolute;
+
   inset-inline-start: 0;
+
   top: 20%;
   bottom: 20%;
 
@@ -463,14 +345,9 @@ p {
   box-shadow: var(--shadow-md);
 }
 
-/* --------------------------------------------------------------------------
-   BUTTONS
-   -------------------------------------------------------------------------- */
+/* ─── BUTTONS ─────────────────────────────────────────────────────────────── */
 
 .warsha-btn-primary {
-  position: relative;
-  overflow: hidden;
-
   background:
     linear-gradient(
       135deg,
@@ -483,6 +360,7 @@ p {
   font-weight: 700;
 
   border: none;
+
   border-radius: var(--radius-md);
 
   cursor: pointer;
@@ -491,6 +369,9 @@ p {
     opacity var(--t-fast),
     transform var(--t-fast),
     box-shadow var(--t-base);
+
+  position: relative;
+  overflow: hidden;
 }
 
 .warsha-btn-primary::after {
@@ -502,7 +383,7 @@ p {
   background:
     linear-gradient(
       135deg,
-      rgba(255, 255, 255, 0.15) 0%,
+      rgba(255,255,255,0.15) 0%,
       transparent 60%
     );
 
@@ -511,7 +392,9 @@ p {
 
 .warsha-btn-primary:hover:not(:disabled) {
   transform: translateY(-1px);
+
   box-shadow: var(--shadow-accent);
+
   opacity: 0.95;
 }
 
@@ -526,28 +409,34 @@ p {
 
 .warsha-btn-ghost {
   background: var(--bg-secondary);
+
   color: var(--text-secondary);
 
   border: 1px solid var(--border);
+
   border-radius: var(--radius-md);
 
   cursor: pointer;
-
-  font-weight: 600;
 
   transition:
     background var(--t-base),
     color var(--t-base),
     border-color var(--t-base),
     transform var(--t-fast);
+
+  font-weight: 600;
 }
 
 .warsha-btn-ghost:hover:not(:disabled) {
   background: var(--bg-card);
   color: var(--text-primary);
+
   border-color: var(--border-strong);
+
   transform: translateY(-1px);
 }
+
+/* Icon button */
 
 .warsha-btn-icon {
   width: 38px;
@@ -565,25 +454,26 @@ p {
   align-items: center;
   justify-content: center;
 
-  color: var(--text-secondary);
-
   transition:
     background var(--t-base),
     border-color var(--t-base),
     transform var(--t-fast),
     color var(--t-base);
+
+  color: var(--text-secondary);
 }
 
 .warsha-btn-icon:hover {
   background: var(--bg-card);
+
   border-color: var(--border-strong);
+
   color: var(--text-primary);
+
   transform: scale(1.05);
 }
 
-/* --------------------------------------------------------------------------
-   FOCUS ACCESSIBILITY
-   -------------------------------------------------------------------------- */
+/* ─── FOCUS ───────────────────────────────────────────────────────────────── */
 
 button:focus-visible,
 a:focus-visible,
@@ -594,13 +484,12 @@ select:focus-visible {
   outline-offset: 3px;
 }
 
-/* --------------------------------------------------------------------------
-   BADGES
-   -------------------------------------------------------------------------- */
+/* ─── BADGES ──────────────────────────────────────────────────────────────── */
 
 .warsha-badge {
   display: inline-flex;
   align-items: center;
+
   gap: 5px;
 
   padding: 4px 10px;
@@ -615,19 +504,21 @@ select:focus-visible {
 
 .warsha-badge-accent {
   background: var(--accent-muted);
+
   color: var(--accent);
+
   border: 1px solid var(--accent-border);
 }
 
 .warsha-badge-outline {
   background: transparent;
+
   color: var(--text-secondary);
+
   border: 1px solid var(--border-strong);
 }
 
-/* --------------------------------------------------------------------------
-   INPUTS
-   -------------------------------------------------------------------------- */
+/* ─── INPUTS ──────────────────────────────────────────────────────────────── */
 
 .warsha-input {
   width: 100%;
@@ -653,10 +544,6 @@ select:focus-visible {
     background var(--t-base);
 }
 
-.warsha-input:hover {
-  border-color: var(--border-strong);
-}
-
 .warsha-input:focus {
   border-color: var(--accent);
 
@@ -670,46 +557,7 @@ select:focus-visible {
   color: var(--text-tertiary);
 }
 
-/* --------------------------------------------------------------------------
-   SEARCH BAR
-   -------------------------------------------------------------------------- */
-
-.warsha-search-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  padding: 13px 16px;
-
-  background: var(--bg-card);
-
-  border-radius: var(--radius-xl);
-
-  border: 1.5px solid var(--border-strong);
-
-  box-shadow: var(--shadow-sm);
-
-  transition:
-    border-color var(--t-base),
-    box-shadow var(--t-base),
-    background var(--t-base);
-}
-
-.warsha-search-bar:hover {
-  border-color: var(--border-accent);
-}
-
-.warsha-search-bar:focus-within {
-  border-color: var(--accent);
-
-  box-shadow:
-    0 0 0 4px var(--accent-muted),
-    var(--shadow-md);
-}
-
-/* --------------------------------------------------------------------------
-   DIVIDERS
-   -------------------------------------------------------------------------- */
+/* ─── DIVIDERS ────────────────────────────────────────────────────────────── */
 
 .warsha-divider {
   height: 1px;
@@ -726,12 +574,11 @@ select:focus-visible {
   margin: 0;
 }
 
-/* --------------------------------------------------------------------------
-   HERO
-   -------------------------------------------------------------------------- */
+/* ─── HERO ────────────────────────────────────────────────────────────────── */
 
 .warsha-hero-grid {
   position: absolute;
+
   inset: 0;
 
   pointer-events: none;
@@ -755,13 +602,6 @@ select:focus-visible {
       black 0%,
       transparent 80%
     );
-
-  -webkit-mask-image:
-    radial-gradient(
-      ellipse 80% 60% at 50% 0%,
-      black 0%,
-      transparent 80%
-    );
 }
 
 .warsha-hero-glow {
@@ -780,8 +620,8 @@ select:focus-visible {
   background:
     radial-gradient(
       ellipse at center,
-      rgba(240, 120, 35, 0.10) 0%,
-      rgba(240, 120, 35, 0.04) 40%,
+      var(--accent-muted) 0%,
+      var(--accent-muted-lg) 40%,
       transparent 70%
     );
 
@@ -790,21 +630,9 @@ select:focus-visible {
   pointer-events: none;
 }
 
-/* --------------------------------------------------------------------------
-   CATEGORY CARDS
-   -------------------------------------------------------------------------- */
+/* ─── CATEGORY CARDS ─────────────────────────────────────────────────────── */
 
 .warsha-cat-card {
-  position: relative;
-  overflow: hidden;
-
-  display: flex;
-  flex-direction: column;
-
-  gap: 12px;
-
-  min-height: 152px;
-
   padding: 20px;
 
   border-radius: var(--radius-lg);
@@ -813,6 +641,13 @@ select:focus-visible {
 
   border: 1px solid var(--border);
 
+  display: flex;
+  flex-direction: column;
+
+  gap: 12px;
+
+  min-height: 152px;
+
   text-decoration: none;
 
   transition:
@@ -820,12 +655,17 @@ select:focus-visible {
     border-color var(--t-base),
     transform var(--t-base),
     box-shadow var(--t-base);
+
+  position: relative;
+
+  overflow: hidden;
 }
 
 .warsha-cat-card::after {
   content: "";
 
   position: absolute;
+
   inset: 0;
 
   background:
@@ -848,19 +688,23 @@ select:focus-visible {
   box-shadow: var(--shadow-md);
 
   border-color:
-    var(--cat-accent-border, var(--border-strong));
+    var(
+      --cat-accent-border,
+      var(--border-strong)
+    );
 
   background:
-    var(--cat-accent-bg, var(--bg-card-hover));
+    var(
+      --cat-accent-bg,
+      var(--bg-card-hover)
+    );
 }
 
 .warsha-cat-card:hover::after {
   opacity: 1;
 }
 
-/* --------------------------------------------------------------------------
-   RATING
-   -------------------------------------------------------------------------- */
+/* ─── SHOP RATING STARS ───────────────────────────────────────────────────── */
 
 .warsha-stars {
   display: flex;
@@ -869,19 +713,18 @@ select:focus-visible {
 }
 
 .warsha-star-filled {
-  color: #F59E0B;
+  color: #6E7F77;
 }
 
 .warsha-star-empty {
   color: var(--border-strong);
 }
 
-/* --------------------------------------------------------------------------
-   SECTION LABELS
-   -------------------------------------------------------------------------- */
+/* ─── SECTION LABELS ──────────────────────────────────────────────────────── */
 
 .warsha-section-eyebrow {
   font-size: 11px;
+
   font-weight: 700;
 
   letter-spacing: 0.08em;
@@ -891,14 +734,155 @@ select:focus-visible {
   color: var(--accent);
 }
 
-/* --------------------------------------------------------------------------
-   FEATURED SHOP CARD
-   -------------------------------------------------------------------------- */
+/* ─── ANIMATIONS ──────────────────────────────────────────────────────────── */
+
+.eyebrow-pulse {
+  animation:
+    pulse-dot
+    2.8s
+    ease-in-out
+    infinite;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+}
+
+.warsha-fade-in {
+  animation:
+    fadeIn
+    0.4s
+    ease
+    both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.warsha-slide-up {
+  animation:
+    slideUp
+    0.5s
+    cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Staggered children */
+
+.warsha-stagger > *:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.warsha-stagger > *:nth-child(2) {
+  animation-delay: 0.10s;
+}
+
+.warsha-stagger > *:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+.warsha-stagger > *:nth-child(4) {
+  animation-delay: 0.20s;
+}
+
+.warsha-stagger > *:nth-child(5) {
+  animation-delay: 0.25s;
+}
+
+.warsha-stagger > *:nth-child(6) {
+  animation-delay: 0.30s;
+}
+
+/* ─── STAT COUNTER ────────────────────────────────────────────────────────── */
+
+.warsha-stat-val {
+  font-size:
+    clamp(
+      1.6rem,
+      4vw,
+      2.4rem
+    );
+
+  font-weight: 900;
+
+  letter-spacing: -0.03em;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--accent),
+      var(--accent-hover)
+    );
+
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── SEARCH BAR ──────────────────────────────────────────────────────────── */
+
+.warsha-search-bar {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 13px 16px;
+
+  background: var(--bg-card);
+
+  border-radius: var(--radius-xl);
+
+  border: 1.5px solid var(--border-strong);
+
+  box-shadow: var(--shadow-sm);
+
+  transition:
+    border-color var(--t-base),
+    box-shadow var(--t-base);
+}
+
+.warsha-search-bar:focus-within {
+  border-color: var(--accent);
+
+  box-shadow:
+    0 0 0 4px var(--accent-muted),
+    var(--shadow-md);
+}
+
+/* ─── FEATURED SHOP CARD ──────────────────────────────────────────────────── */
 
 .warsha-featured-card {
-  position: relative;
-  overflow: hidden;
-
   background: var(--bg-card);
 
   border: 1px solid var(--border);
@@ -907,10 +891,14 @@ select:focus-visible {
 
   padding: 22px;
 
+  position: relative;
+
   transition:
     border-color var(--t-base),
     box-shadow var(--t-base),
     transform var(--t-base);
+
+  overflow: hidden;
 }
 
 .warsha-featured-card::before {
@@ -950,185 +938,18 @@ select:focus-visible {
   opacity: 1;
 }
 
-/* --------------------------------------------------------------------------
-   STAT COUNTER
-   -------------------------------------------------------------------------- */
+/* ─── REDUCED MOTION ──────────────────────────────────────────────────────── */
 
-.warsha-stat-val {
-  font-size: clamp(1.6rem, 4vw, 2.4rem);
-
-  font-weight: 900;
-
-  letter-spacing: -0.03em;
-
-  background:
-    linear-gradient(
-      135deg,
-      var(--accent),
-      var(--accent-hover)
-    );
-
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* --------------------------------------------------------------------------
-   ANIMATIONS
-   -------------------------------------------------------------------------- */
-
-.warsha-fade-in {
-  animation: fadeIn 0.4s ease both;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
-.warsha-slide-up {
-  animation:
-    slideUp
-    0.5s
-    cubic-bezier(0.22, 1, 0.36, 1)
-    both;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Staggered animations */
-
-.warsha-stagger > *:nth-child(1) {
-  animation-delay: 0.05s;
-}
-
-.warsha-stagger > *:nth-child(2) {
-  animation-delay: 0.10s;
-}
-
-.warsha-stagger > *:nth-child(3) {
-  animation-delay: 0.15s;
-}
-
-.warsha-stagger > *:nth-child(4) {
-  animation-delay: 0.20s;
-}
-
-.warsha-stagger > *:nth-child(5) {
-  animation-delay: 0.25s;
-}
-
-.warsha-stagger > *:nth-child(6) {
-  animation-delay: 0.30s;
-}
-
-/* Pulse */
-
-.eyebrow-pulse {
-  animation:
-    pulse-dot
-    2.8s
-    ease-in-out
-    infinite;
-}
-
-@keyframes pulse-dot {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 0.4;
-    transform: scale(0.85);
-  }
-}
-
-/* --------------------------------------------------------------------------
-   CATEGORY PILLS SCROLL
-   -------------------------------------------------------------------------- */
-
-.warsha-pills-scroll {
-  overflow-x: auto;
-
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-
-  overscroll-behavior-x: contain;
-}
-
-.warsha-pills-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-/* --------------------------------------------------------------------------
-   LIST SHOP PAGE
-   -------------------------------------------------------------------------- */
-
-.warsha-list-grid {
-  display: grid;
-  gap: 24px;
-
-  grid-template-columns:
-    minmax(0, 1fr)
-    minmax(0, 1fr);
-}
-
-/* --------------------------------------------------------------------------
-   MOBILE BOTTOM NAV
-   -------------------------------------------------------------------------- */
-
-.warsha-mobile-bottom-nav {
-  display: none;
-}
-
-/* --------------------------------------------------------------------------
-   RESPONSIVE — 768px
-   -------------------------------------------------------------------------- */
-
-@media (max-width: 768px) {
-  .warsha-desktop-nav {
-    display: none !important;
-  }
-
-  .warsha-mobile-nav {
-    display: flex !important;
-  }
-
-  .warsha-list-grid {
-    grid-template-columns: 1fr !important;
-  }
-
-  .warsha-featured-card {
-    border-radius: var(--radius-lg);
-  }
-
-  .warsha-search-bar {
-    border-radius: var(--radius-lg);
-  }
-}
-
-/* --------------------------------------------------------------------------
-   RESPONSIVE — 640px
-   -------------------------------------------------------------------------- */
+/* ─── RESPONSIVE ──────────────────────────────────────────────────────────── */
 
 @media (max-width: 640px) {
   :root {
@@ -1139,62 +960,71 @@ select:focus-visible {
     padding: 0 16px;
   }
 
-  .warsha-nav-logo {
-    gap: 8px;
-  }
-
-  .warsha-nav-logo-icon {
-    width: 30px;
-    height: 30px;
-    font-size: 14px;
-  }
-
   .warsha-cat-card {
     min-height: 130px;
     padding: 16px;
   }
-
-  .warsha-search-bar {
-    padding: 10px 12px;
-  }
-
-  .warsha-hero-glow {
-    width: 480px;
-    height: 300px;
-  }
 }
 
-/* --------------------------------------------------------------------------
-   RESPONSIVE — 480px
-   -------------------------------------------------------------------------- */
+/* ─── RESPONSIVE NAVIGATION ───────────────────────────────────────────────── */
 
-@media (max-width: 480px) {
-  .warsha-nav {
-    padding: 0 12px;
+.warsha-desktop-nav {
+  display: flex;
+}
+
+.warsha-mobile-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .warsha-desktop-nav {
+    display: none !important;
   }
 
   .warsha-mobile-nav {
-    gap: 5px;
-  }
-
-  .warsha-btn-icon {
-    width: 36px;
-    height: 36px;
-  }
-
-  .warsha-search-bar {
-    gap: 7px;
-  }
-
-  .warsha-search-bar button {
-    padding-left: 12px !important;
-    padding-right: 12px !important;
+    display: flex !important;
   }
 }
 
-/* --------------------------------------------------------------------------
-   SAFE AREA — iOS
-   -------------------------------------------------------------------------- */
+/* ─── LIST SHOP PAGE ───────────────────────────────────────────────────────── */
+
+.warsha-list-grid {
+  display: grid;
+
+  gap: 24px;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 1fr);
+}
+
+@media (max-width: 680px) {
+  .warsha-list-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ─── CATEGORY PILLS ──────────────────────────────────────────────────────── */
+
+.warsha-pills-scroll {
+  overflow-x: auto;
+
+  scrollbar-width: none;
+
+  -ms-overflow-style: none;
+}
+
+.warsha-pills-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* ─── MOBILE BOTTOM NAV ───────────────────────────────────────────────────── */
+
+.warsha-mobile-bottom-nav {
+  display: none;
+}
+
+/* ─── iOS SAFE AREA ───────────────────────────────────────────────────────── */
 
 @supports (-webkit-touch-callout: none) {
   .warsha-mobile-bottom-nav {
@@ -1203,23 +1033,5 @@ select:focus-visible {
         safe-area-inset-bottom,
         16px
       );
-  }
-}
-
-/* --------------------------------------------------------------------------
-   REDUCED MOTION
-   -------------------------------------------------------------------------- */
-
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
   }
 }
