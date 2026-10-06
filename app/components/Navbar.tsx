@@ -20,7 +20,7 @@ export default function Navbar({
 }: NavbarProps) {
   const isArabic = lang === "ar";
 
-  const nav = {
+  const labels = {
     home: isArabic ? "الرئيسية" : "Home",
     workshops: isArabic ? "الورش" : "Workshops",
     map: isArabic ? "الخريطة" : "Map",
@@ -32,454 +32,432 @@ export default function Navbar({
   };
 
   return (
-    <header className="warsha-nav" dir={isArabic ? "rtl" : "ltr"}>
-      {/* ─────────────────────────────────────────────────────────────
-          LOGO
-      ───────────────────────────────────────────────────────────── */}
-
-      <Link href="/" className="warsha-nav-logo">
-        <div
-          className="warsha-nav-logo-icon"
-          aria-label="Warsha"
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-          >
-            <circle
-              cx="12"
-              cy="12"
-              r="9"
-              stroke="currentColor"
-              strokeWidth="1.7"
-            />
-
-            <path
-              d="M8.5 8.5L10.5 10.5"
-              stroke="currentColor"
-              strokeWidth="1.7"
-              strokeLinecap="round"
-            />
-
-            <path
-              d="M13.5 13.5L15.5 15.5"
-              stroke="currentColor"
-              strokeWidth="1.7"
-              strokeLinecap="round"
-            />
-
-            <path
-              d="M15.5 8.5L13.5 10.5"
-              stroke="currentColor"
-              strokeWidth="1.7"
-              strokeLinecap="round"
-            />
-
-            <path
-              d="M10.5 13.5L8.5 15.5"
-              stroke="currentColor"
-              strokeWidth="1.7"
-              strokeLinecap="round"
-            />
-
-            <circle
-              cx="12"
-              cy="12"
-              r="2.2"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            />
-          </svg>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            lineHeight: 1,
-          }}
-        >
-          <span
-            style={{
-              fontSize: 17,
-              fontWeight: 900,
-              color: "var(--text-primary)",
-              letterSpacing: "-0.04em",
-            }}
-          >
-            Warsha
-            <span style={{ color: "var(--accent)" }}>.eg</span>
-          </span>
-
-          <span
-            style={{
-              marginTop: 3,
-              fontSize: 8,
-              fontWeight: 700,
-              letterSpacing: "0.10em",
-              color: "var(--text-tertiary)",
-            }}
-          >
-            WORKSHOP DIRECTORY
-          </span>
-        </div>
-      </Link>
-
-      {/* ─────────────────────────────────────────────────────────────
-          DESKTOP NAVIGATION
-      ───────────────────────────────────────────────────────────── */}
-
-      <nav
-        className="warsha-desktop-nav"
-        aria-label="Main navigation"
-      >
-        <Link
-          href="/"
-          className="warsha-nav-link"
-        >
-          {nav.home}
-        </Link>
-
-        <Link
-          href="/workshops"
-          className="warsha-nav-link"
-        >
-          {nav.workshops}
-        </Link>
-
-        <Link
-          href="/map"
-          className="warsha-nav-link"
-        >
-          {nav.map}
-        </Link>
-
-        <Link
-          href="/diagnose"
-          className="warsha-nav-link"
-        >
-          {nav.diagnose}
-        </Link>
-
-        <Link
-          href="/about"
-          className="warsha-nav-link"
-        >
-          {nav.about}
-        </Link>
-      </nav>
-
-      {/* ─────────────────────────────────────────────────────────────
-          RIGHT SIDE
-      ───────────────────────────────────────────────────────────── */}
-
-      <div
-        className="warsha-nav-actions"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-        }}
-      >
-        {/* Language */}
-
-        <button
-          type="button"
-          onClick={onToggleLang}
-          className="warsha-nav-control"
-          aria-label="Change language"
-        >
-          {nav.language}
-        </button>
-
-        {/* Theme */}
-
-        <button
-          type="button"
-          onClick={onToggleTheme}
-          className="warsha-nav-theme"
-          aria-label={
-            theme === "dark"
-              ? "Switch to light mode"
-              : "Switch to dark mode"
-          }
-        >
-          {theme === "dark" ? (
+    <>
+      <header className="warsha-navbar" dir={isArabic ? "rtl" : "ltr"}>
+        {/* LOGO */}
+        <Link href="/" className="warsha-brand">
+          <div className="warsha-brand-mark">
             <svg
-              width="17"
-              height="17"
+              width="19"
+              height="19"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="1.8"
+              strokeWidth="1.7"
               strokeLinecap="round"
               strokeLinejoin="round"
               aria-hidden="true"
             >
-              <circle cx="12" cy="12" r="4" />
-              <path d="M12 2v2" />
-              <path d="M12 20v2" />
-              <path d="m4.93 4.93 1.42 1.42" />
-              <path d="m17.65 17.65 1.42 1.42" />
-              <path d="M2 12h2" />
-              <path d="M20 12h2" />
-              <path d="m6.35 17.65-1.42 1.42" />
-              <path d="m19.07 4.93-1.42 1.42" />
+              <circle cx="12" cy="12" r="8.5" />
+              <path d="M9 9l2 2" />
+              <path d="M13 13l2 2" />
+              <path d="M15 9l-2 2" />
+              <path d="M11 13l-2 2" />
+              <circle cx="12" cy="12" r="2" />
             </svg>
-          ) : (
-            <svg
-              width="17"
-              height="17"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.7 6.7 0 0 0 9.8 9.8Z" />
-            </svg>
-          )}
-        </button>
+          </div>
 
-        {/* Sign in */}
+          <div className="warsha-brand-text">
+            <div className="warsha-brand-name">
+              Warsha<span>.eg</span>
+            </div>
 
-        <Link
-          href="/login"
-          className="warsha-nav-signin"
-        >
-          {nav.signIn}
+            <div className="warsha-brand-subtitle">
+              WORKSHOP DIRECTORY
+            </div>
+          </div>
         </Link>
 
-        {/* List your shop */}
+        {/* DESKTOP NAVIGATION */}
+        <nav className="warsha-main-links">
+          <Link href="/" className="warsha-main-link">
+            {labels.home}
+          </Link>
 
-        <Link
-          href="/list-shop"
-          className="warsha-nav-list-shop"
-        >
-          {nav.listShop}
-        </Link>
-      </div>
+          <Link href="/workshops" className="warsha-main-link">
+            {labels.workshops}
+          </Link>
 
-      {/* ─────────────────────────────────────────────────────────────
-          MOBILE
-      ───────────────────────────────────────────────────────────── */}
+          <Link href="/map" className="warsha-main-link">
+            {labels.map}
+          </Link>
 
-      <div className="warsha-mobile-nav">
-        <button
-          type="button"
-          onClick={onToggleLang}
-          className="warsha-nav-control"
-          aria-label="Change language"
-        >
-          {nav.language}
-        </button>
+          <Link href="/diagnose" className="warsha-main-link">
+            {labels.diagnose}
+          </Link>
 
-        <button
-          type="button"
-          onClick={onToggleTheme}
-          className="warsha-nav-theme"
-          aria-label="Toggle theme"
-        >
-          {theme === "dark" ? "☀" : "☾"}
-        </button>
-      </div>
+          <Link href="/about" className="warsha-main-link">
+            {labels.about}
+          </Link>
+        </nav>
+
+        {/* RIGHT ACTIONS */}
+        <div className="warsha-nav-actions">
+          <button
+            type="button"
+            onClick={onToggleLang}
+            className="warsha-nav-button"
+          >
+            {labels.language}
+          </button>
+
+          <button
+            type="button"
+            onClick={onToggleTheme}
+            className="warsha-theme-button"
+            aria-label={
+              theme === "dark"
+                ? "Switch to light mode"
+                : "Switch to dark mode"
+            }
+          >
+            {theme === "dark" ? (
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v2" />
+                <path d="M12 20v2" />
+                <path d="m4.93 4.93 1.42 1.42" />
+                <path d="m17.65 17.65 1.42 1.42" />
+                <path d="M2 12h2" />
+                <path d="M20 12h2" />
+                <path d="m6.35 17.65-1.42 1.42" />
+                <path d="m19.07 4.93-1.42 1.42" />
+              </svg>
+            ) : (
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.7 6.7 0 0 0 9.8 9.8Z" />
+              </svg>
+            )}
+          </button>
+
+          <Link href="/login" className="warsha-signin">
+            {labels.signIn}
+          </Link>
+
+          <Link href="/list-shop" className="warsha-list-shop">
+            {labels.listShop}
+          </Link>
+        </div>
+      </header>
 
       <style jsx>{`
-        .warsha-nav-link {
+        .warsha-navbar {
+          position: sticky;
+          top: 0;
+          z-index: 100;
+
+          width: 100%;
+          height: 64px;
+
+          display: flex;
+          align-items: center;
+
+          padding: 0 24px;
+
+          background: color-mix(
+            in srgb,
+            var(--bg) 92%,
+            transparent
+          );
+
+          border-bottom: 1px solid var(--border);
+
+          backdrop-filter: blur(18px);
+          -webkit-backdrop-filter: blur(18px);
+
+          box-sizing: border-box;
+        }
+
+        .warsha-brand {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+
+          text-decoration: none;
+          flex-shrink: 0;
+        }
+
+        .warsha-brand-mark {
+          width: 34px;
+          height: 34px;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          border-radius: 10px;
+
+          color: var(--text-primary);
+
+          background: var(--accent-muted);
+
+          border: 1px solid var(--accent-border);
+
+          box-shadow: 0 4px 16px var(--accent-muted);
+
+          transition:
+            transform 0.2s ease,
+            background 0.2s ease;
+        }
+
+        .warsha-brand:hover .warsha-brand-mark {
+          transform: translateY(-1px);
+          background: var(--accent-border);
+        }
+
+        .warsha-brand-text {
+          display: flex;
+          flex-direction: column;
+          line-height: 1;
+        }
+
+        .warsha-brand-name {
+          font-size: 17px;
+          font-weight: 850;
+          letter-spacing: -0.045em;
+          color: var(--text-primary);
+        }
+
+        .warsha-brand-name span {
+          color: var(--accent);
+        }
+
+        .warsha-brand-subtitle {
+          margin-top: 4px;
+
+          font-size: 7px;
+          font-weight: 700;
+
+          letter-spacing: 0.13em;
+
+          color: var(--text-tertiary);
+        }
+
+        .warsha-main-links {
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%);
+
+          display: flex;
+          align-items: center;
+          gap: 3px;
+
+          white-space: nowrap;
+        }
+
+        .warsha-main-link {
           position: relative;
 
-          padding: 8px 12px;
+          padding: 8px 11px;
 
           color: var(--text-secondary);
 
           text-decoration: none;
 
           font-size: 13px;
-          font-weight: 500;
+          font-weight: 550;
 
-          border-radius: var(--radius-sm);
+          border-radius: 9px;
 
           transition:
-            color var(--t-base),
-            background var(--t-base);
+            color 0.18s ease,
+            background 0.18s ease;
         }
 
-        .warsha-nav-link:hover {
+        .warsha-main-link:hover {
           color: var(--text-primary);
           background: var(--accent-muted);
         }
 
-        .warsha-nav-control {
-          height: 36px;
+        .warsha-nav-actions {
+          margin-inline-start: auto;
 
-          padding: 0 11px;
+          display: flex;
+          align-items: center;
+          gap: 7px;
+        }
+
+        .warsha-nav-button,
+        .warsha-theme-button {
+          height: 36px;
 
           display: flex;
           align-items: center;
           justify-content: center;
-
-          background: transparent;
 
           color: var(--text-secondary);
 
-          border: 1px solid var(--border);
+          background: var(--bg-secondary);
 
-          border-radius: var(--radius-md);
+          border: 1px solid var(--border);
 
           cursor: pointer;
 
+          transition:
+            color 0.18s ease,
+            background 0.18s ease,
+            border-color 0.18s ease,
+            transform 0.18s ease;
+        }
+
+        .warsha-nav-button {
+          padding: 0 11px;
+          border-radius: 9px;
+
           font-family: inherit;
+          font-size: 11px;
+          font-weight: 650;
+        }
+
+        .warsha-theme-button {
+          width: 36px;
+          border-radius: 9px;
+        }
+
+        .warsha-nav-button:hover,
+        .warsha-theme-button:hover {
+          color: var(--text-primary);
+          background: var(--accent-muted);
+          border-color: var(--accent-border);
+        }
+
+        .warsha-theme-button:hover {
+          transform: translateY(-1px);
+        }
+
+        .warsha-signin {
+          height: 36px;
+
+          display: flex;
+          align-items: center;
+
+          padding: 0 12px;
+
+          color: var(--text-secondary);
+
+          border: 1px solid transparent;
+
+          border-radius: 9px;
+
+          text-decoration: none;
+
           font-size: 12px;
-          font-weight: 600;
+          font-weight: 650;
 
           transition:
-            color var(--t-base),
-            background var(--t-base),
-            border-color var(--t-base);
+            color 0.18s ease,
+            background 0.18s ease;
         }
 
-        .warsha-nav-control:hover {
+        .warsha-signin:hover {
           color: var(--text-primary);
-          background: var(--bg-secondary);
-          border-color: var(--border-strong);
+          background: var(--accent-muted);
         }
 
-        .warsha-nav-theme {
-          width: 36px;
+        .warsha-list-shop {
           height: 36px;
 
           display: flex;
           align-items: center;
           justify-content: center;
-
-          background: var(--bg-secondary);
-
-          color: var(--accent);
-
-          border: 1px solid var(--border);
-
-          border-radius: var(--radius-md);
-
-          cursor: pointer;
-
-          font-family: inherit;
-          font-size: 16px;
-
-          transition:
-            color var(--t-base),
-            background var(--t-base),
-            border-color var(--t-base),
-            transform var(--t-fast);
-        }
-
-        .warsha-nav-theme:hover {
-          background: var(--accent-muted);
-          border-color: var(--accent-border);
-          transform: scale(1.04);
-        }
-
-        .warsha-nav-signin {
-          height: 36px;
-
-          display: flex;
-          align-items: center;
 
           padding: 0 14px;
 
-          color: var(--text-secondary);
-
-          border: 1px solid var(--border);
-
-          border-radius: var(--radius-md);
-
-          text-decoration: none;
-
-          font-size: 12px;
-          font-weight: 600;
-
-          transition:
-            color var(--t-base),
-            background var(--t-base),
-            border-color var(--t-base);
-        }
-
-        .warsha-nav-signin:hover {
-          color: var(--text-primary);
-          background: var(--bg-secondary);
-          border-color: var(--border-strong);
-        }
-
-        .warsha-nav-list-shop {
-          height: 36px;
-
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          padding: 0 16px;
+          color: var(--text-inverse);
 
           background: var(--accent);
 
-          color: var(--text-primary);
-
           border: 1px solid var(--accent-border);
 
-          border-radius: var(--radius-md);
+          border-radius: 9px;
 
           text-decoration: none;
 
           font-size: 12px;
-          font-weight: 800;
+          font-weight: 750;
 
           box-shadow: 0 4px 16px var(--accent-muted);
 
           transition:
-            background var(--t-base),
-            color var(--t-base),
-            transform var(--t-fast),
-            box-shadow var(--t-base);
+            background 0.18s ease,
+            transform 0.18s ease,
+            box-shadow 0.18s ease;
         }
 
-        .warsha-nav-list-shop:hover {
+        .warsha-list-shop:hover {
           background: var(--accent-hover);
-          color: var(--text-inverse);
-
           transform: translateY(-1px);
-
           box-shadow: var(--shadow-accent);
         }
 
-        @media (max-width: 768px) {
-          .warsha-nav-actions {
-            display: none !important;
+        @media (max-width: 1050px) {
+          .warsha-main-link {
+            padding: 8px 7px;
+            font-size: 12px;
           }
 
-          .warsha-nav-logo span:last-child {
+          .warsha-signin {
             display: none;
           }
         }
 
-        @media (max-width: 480px) {
-          .warsha-nav {
-            padding: 0 12px;
+        @media (max-width: 800px) {
+          .warsha-navbar {
+            height: 60px;
+            padding: 0 14px;
           }
 
-          .warsha-nav-logo {
-            gap: 7px;
+          .warsha-main-links {
+            display: none;
           }
 
-          .warsha-nav-logo-icon {
-            width: 30px !important;
-            height: 30px !important;
+          .warsha-brand-subtitle {
+            display: none;
+          }
+
+          .warsha-brand-name {
+            font-size: 16px;
+          }
+
+          .warsha-brand-mark {
+            width: 32px;
+            height: 32px;
+          }
+        }
+
+        @media (max-width: 450px) {
+          .warsha-nav-button {
+            font-size: 10px;
+            padding: 0 8px;
+          }
+
+          .warsha-list-shop {
+            display: none;
+          }
+
+          .warsha-nav-actions {
+            gap: 5px;
           }
         }
       `}</style>
-    </header>
+    </>
   );
 }
