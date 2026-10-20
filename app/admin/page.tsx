@@ -26,7 +26,7 @@ async function adminGetAllConversations() {
   const { data } = await s
     .from("conversations")
     .select("*")
-    .order("last_message_at", { ascending: false });
+    .order("updated_at", { ascending: false });
   return data ?? [];
 }
 
@@ -42,15 +42,14 @@ async function adminGetAllRequests() {
 async function approveRequest(req: any) {
   const s = createClient();
 
-  // 1. Insert into shops table
+  // 1. Insert into shops table — only columns that actually exist
   const { data: newShop, error: shopError } = await s
     .from("shops")
     .insert({
       name: req.name,
-      phone: req.phone,
-      area_en: req.area,
-      category_id: req.category,
-      description_en: req.description,
+      phone: req.phone ?? null,
+      area_en: req.area ?? null,
+      category_id: req.category ?? null,
       rating: 0,
     })
     .select()
@@ -122,16 +121,12 @@ export default function AdminPage() {
     });
   }, []);
 
-  const refreshRequests = async () => {
-    const r = await adminGetAllRequests();
-    setRequests(r);
-  };
-
   const handleApprove = async (req: any) => {
     setActionLoading(req.id);
     try {
       await approveRequest(req);
-      await refreshRequests();
+      // Remove from list immediately after approval
+      setRequests(prev => prev.filter(r => r.id !== req.id));
       showToast(`✓ "${req.name}" approved and added to shops`);
     } catch (e: any) {
       showToast(e.message, false);
@@ -143,10 +138,12 @@ export default function AdminPage() {
   const handleReject = async () => {
     if (!rejectModal) return;
     setActionLoading(rejectModal.id);
+    const modalRef = rejectModal; // capture before clearing
     try {
-      await rejectRequest(rejectModal.id, rejectReason);
-      await refreshRequests();
-      showToast(`✗ "${rejectModal.name}" rejected`);
+      await rejectRequest(modalRef.id, rejectReason);
+      // Remove from list immediately after rejection
+      setRequests(prev => prev.filter(r => r.id !== modalRef.id));
+      showToast(`✗ "${modalRef.name}" rejected`);
     } catch (e: any) {
       showToast(e.message, false);
     } finally {
@@ -394,14 +391,14 @@ export default function AdminPage() {
                 ) : (
                   <div style={{ background:"#111110", border:"1px solid #1e1e1c", borderRadius:14, overflow:"hidden" }}>
                     <table style={{ width:"100%", borderCollapse:"collapse" }}>
-                      <thead><tr><TH>Conv ID</TH><TH>Shop ID</TH><TH>Last message</TH><TH>Date</TH></tr></thead>
+                      <thead><tr><TH>Conv ID</TH><TH>Shop</TH><TH>Last message</TH><TH>Date</TH></tr></thead>
                       <tbody>
                         {convs.map((c:any) => (
                           <tr key={c.id}>
                             <TD muted>#{c.id}</TD>
-                            <TD muted>#{c.shop_id}</TD>
+                            <TD>{c.shop_name || c.shop_id}</TD>
                             <TD>{c.last_message || "—"}</TD>
-                            <TD muted>{new Date(c.last_message_at).toLocaleDateString("en-GB")}</TD>
+                            <TD muted>{c.updated_at ? new Date(c.updated_at).toLocaleDateString("en-GB") : "—"}</TD>
                           </tr>
                         ))}
                       </tbody>

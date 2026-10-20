@@ -1,287 +1,343 @@
 "use client";
-import { useState, useEffect, useRef, useCallback, Suspense } from "react";
+
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Navbar from "../components/Navbar";
-import {
-  getCurrentUser, getOrCreateConversation, getConversations,
-  getMessages, sendMessage, subscribeToMessages
-} from "../lib/supabase";
-import { SHOPS, CATEGORIES, type Lang } from "../lib/translations";
+import { t, SHOPS, type Lang } from "../lib/translations";
+import { createClient, getCurrentUser } from "../lib/supabase";
 
 function useThemeAndLang() {
-  const [theme, setTheme] = useState<"dark"|"light">("light");
-  const [lang, setLang] = useState<Lang>("ar");
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [lang, setLang]   = useState<Lang>("ar");
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
-    setTheme((localStorage.getItem("warsha-theme") as any) || "light");
-    setLang((localStorage.getItem("warsha-lang") as any) || "ar");
-    setMounted(true);
+    const savedTheme = (localStorage.getItem("warsha-theme") as "dark" | "light") || "dark";
+    const savedLang  = (localStorage.getItem("warsha-lang")  as Lang) || "ar";
+    setTheme(savedTheme); setLang(savedLang); setMounted(true);
   }, []);
   const toggleTheme = useCallback(() => {
-    const n = theme==="dark"?"light":"dark";
-    setTheme(n); localStorage.setItem("warsha-theme",n);
-    document.documentElement.setAttribute("data-theme",n);
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next); localStorage.setItem("warsha-theme", next);
+    document.documentElement.setAttribute("data-theme", next);
   }, [theme]);
   const toggleLang = useCallback(() => {
-    const n:Lang=lang==="ar"?"en":"ar";
-    setLang(n); localStorage.setItem("warsha-lang",n);
-    document.documentElement.setAttribute("lang",n);
-    document.documentElement.setAttribute("dir",n==="ar"?"rtl":"ltr");
+    const next: Lang = lang === "ar" ? "en" : "ar";
+    setLang(next); localStorage.setItem("warsha-lang", next);
+    document.documentElement.setAttribute("lang", next);
+    document.documentElement.setAttribute("dir", next === "ar" ? "rtl" : "ltr");
   }, [lang]);
   return { theme, lang, toggleTheme, toggleLang, mounted };
 }
 
-function ChatInner() {
+interface Message {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  body: string;
+  created_at: string;
+  sender_name?: string;
+}
+
+interface Conversation {
+  id: string;
+  shop_id: string;
+  user_id: string;
+  shop_name: string;
+  last_message?: string;
+  last_at?: string;
+  unread?: number;
+}
+
+export default function ChatPage() {
   const { theme, lang, toggleTheme, toggleLang, mounted } = useThemeAndLang();
   const dir = lang === "ar" ? "rtl" : "ltr";
+  const isDark = theme === "dark";
   const searchParams = useSearchParams();
-  const shopIdParam = searchParams.get("shop");
+  const router = useRouter();
 
-  const [user, setUser] = useState<any>(null);
-  const [conversations, setConversations] = useState<any[]>([]);
-  const [activeConvId, setActiveConvId] = useState<number | null>(null);
-  const [messages, setMessages] = useState<any[]>([]);
-  const [input, setInput] = useState("");
-  const [sending, setSending] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser]                     = useState<any>(null);
+  const [conversations, setConversations]   = useState<Conversation[]>([]);
+  const [activeConvId, setActiveConvId]     = useState<string | null>(null);
+  const [messages, setMessages]             = useState<Message[]>([]);
+  const [newMsg, setNewMsg]                 = useState("");
+  const [sending, setSending]               = useState(false);
+  const [loadingConvs, setLoadingConvs]     = useState(true);
+  const [loadingMsgs, setLoadingMsgs]       = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
+  const bg         = isDark ? "#0F1414" : "#FAF7F2";
+  const surface    = isDark ? "#1F2A2E" : "#ffffff";
+  const border     = isDark ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.08)";
+  const textPri    = isDark ? "#EAECE9" : "#111110";
+  const textSec    = isDark ? "rgba(234,236,233,.5)" : "rgba(0,0,0,.45)";
+  const accent     = isDark ? "#6E7F77" : "#214E4F";
+
+  // Load user
   useEffect(() => {
-    getCurrentUser().then(async u => {
-      if (!u) { window.location.href = "/auth/login"; return; }
-      setUser(u);
-      const convs = await getConversations(u.id);
-      setConversations(convs);
-      if (shopIdParam) {
-        const conv = await getOrCreateConversation(u.id, Number(shopIdParam));
-        if (conv) {
-          setActiveConvId(conv.id);
-          setConversations(prev => prev.find((c:any) => c.id === conv.id) ? prev : [conv, ...prev]);
-        }
-      } else if (convs.length > 0) {
-        setActiveConvId(convs[0].id);
+    getCurrentUser().then(setUser).catch(() => setUser(null));
+  }, []);
+
+  // If ?shop= param passed, start or open that conversation
+  useEffect(() => {
+    if (!user) return;
+    const shopId = searchParams.get("shop");
+    if (!shopId) return;
+
+    async function openOrCreate() {
+      const sb = createClient();
+      const shopInfo = SHOPS.find(s => String(s.id) === shopId);
+      const shopName = shopInfo?.name ?? "Workshop";
+
+      // Check if conversation already exists
+      const { data: existing } = await sb
+        .from("conversations")
+        .select("id")
+        .eq("shop_id", shopId)
+        .eq("user_id", user.id)
+        .single();
+
+      if (existing) {
+        setActiveConvId(existing.id);
+      } else {
+        const { data: created, error } = await sb
+          .from("conversations")
+          .insert({ shop_id: shopId, user_id: user.id, shop_name: shopName })
+          .select("id")
+          .single();
+        if (created) setActiveConvId(created.id);
       }
-      setLoading(false);
-    });
-  }, [shopIdParam]);
+    }
+    openOrCreate();
+  }, [user, searchParams]);
 
+  // Load conversations list
+  useEffect(() => {
+    if (!user) return;
+    async function load() {
+      setLoadingConvs(true);
+      const sb = createClient();
+      const { data } = await sb
+        .from("conversations")
+        .select("*")
+        .or(`user_id.eq.${user.id},shop_owner_id.eq.${user.id}`)
+        .order("updated_at", { ascending: false });
+      setConversations(data ?? []);
+      setLoadingConvs(false);
+    }
+    load();
+  }, [user, activeConvId]);
+
+  // Load messages for active conversation
   useEffect(() => {
     if (!activeConvId) return;
-    getMessages(activeConvId).then(setMessages);
-    inputRef.current?.focus();
+    setLoadingMsgs(true);
+    const sb = createClient();
+
+    sb.from("messages")
+      .select("*")
+      .eq("conversation_id", activeConvId)
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        setMessages(data ?? []);
+        setLoadingMsgs(false);
+        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+      });
+
+    // Realtime subscription
+    const channel = sb
+      .channel(`msgs-${activeConvId}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${activeConvId}` },
+        payload => {
+          setMessages(prev => [...prev, payload.new as Message]);
+          setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+        }
+      )
+      .subscribe();
+
+    return () => { sb.removeChannel(channel); };
   }, [activeConvId]);
 
-  // FIX: wrap subscribeToMessages in a sync function so useEffect cleanup works
-  useEffect(() => {
-    if (!activeConvId) return;
-    let unsub: (() => void) | undefined;
-    const sub = subscribeToMessages(activeConvId, (msg: any) => {
-      setMessages(prev => prev.find((m:any) => m.id === msg.id) ? prev : [...prev, msg]);
-    });
-    // subscribeToMessages returns a cleanup function
-    unsub = sub as unknown as () => void;
-    return () => { if (unsub) unsub(); };
-  }, [activeConvId]);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  async function handleSend() {
-    if (!input.trim() || !user || !activeConvId || sending) return;
+  async function sendMessage(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newMsg.trim() || !user || !activeConvId) return;
     setSending(true);
-    const content = input.trim();
-    setInput("");
-    const tempId = Date.now();
-    setMessages(prev => [...prev, { id: tempId, sender_id: user.id, content, created_at: new Date().toISOString(), temp: true }]);
-    setConversations(prev => prev.map((c:any) => c.id === activeConvId ? { ...c, last_message: content, last_message_at: new Date().toISOString() } : c));
-    await sendMessage(activeConvId, user.id, content);
+    const sb = createClient();
+    await sb.from("messages").insert({
+      conversation_id: activeConvId,
+      sender_id: user.id,
+      body: newMsg.trim(),
+    });
+    // Update conversation timestamp
+    await sb.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", activeConvId);
+    setNewMsg("");
     setSending(false);
-    inputRef.current?.focus();
   }
 
-  if (!mounted || loading) return (
-    <div style={{ minHeight:"100vh", background:"var(--bg)", display:"flex", alignItems:"center", justifyContent:"center" }}>
-      <div style={{ width:36, height:36, borderRadius:"50%", border:"3px solid #E8730A", borderTopColor:"transparent", animation:"spin 1s linear infinite" }} />
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-    </div>
-  );
+  if (!mounted) return null;
 
-  const activeConv = conversations.find((c:any) => c.id === activeConvId);
-  const activeShop = activeConv ? SHOPS.find(s => s.id === activeConv.shop_id) : null;
-  const activeShopCat = activeShop ? CATEGORIES.find(c => c.id === activeShop.category) : null;
-  const isDark = theme === "dark";
+  if (!user) {
+    return (
+      <div dir={dir} style={{ minHeight: "100vh", background: bg, color: textPri }}>
+        <Navbar lang={lang} theme={theme} onToggleLang={toggleLang} onToggleTheme={toggleTheme} />
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", gap: 16, padding: 24 }}>
+          <div style={{ fontSize: 40 }}>💬</div>
+          <h2 style={{ fontSize: 20, fontWeight: 800, color: textPri }}>{lang === "ar" ? "سجّل دخولك للتواصل" : "Sign in to message workshops"}</h2>
+          <p style={{ fontSize: 14, color: textSec, textAlign: "center", maxWidth: 300 }}>
+            {lang === "ar" ? "تحتاج لحساب علشان تقدر تتواصل مع الورش" : "You need an account to message workshops"}
+          </p>
+          <Link href="/auth/login" style={{ padding: "12px 28px", borderRadius: 12, background: accent, color: "#fff", fontWeight: 700, fontSize: 14 }}>
+            {lang === "ar" ? "تسجيل الدخول" : "Sign in"}
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const activeConv = conversations.find(c => c.id === activeConvId);
 
   return (
-    <div dir={dir} style={{ height:"100vh", display:"flex", flexDirection:"column", background:"var(--bg)", color:"var(--text-primary)" }}>
+    <div dir={dir} style={{ minHeight: "100vh", background: bg, color: textPri, display: "flex", flexDirection: "column" }}>
       <Navbar lang={lang} theme={theme} onToggleLang={toggleLang} onToggleTheme={toggleTheme} />
 
-      <div style={{ flex:1, display:"flex", overflow:"hidden", minHeight:0 }}>
+      <div style={{ flex: 1, display: "flex", maxWidth: 1000, margin: "0 auto", width: "100%", padding: "20px 16px 80px", gap: 16, alignItems: "flex-start" }}>
 
-        {/* Sidebar */}
-        <div style={{ width:300, flexShrink:0, display:"flex", flexDirection:"column", borderInlineEnd:"1px solid var(--border)", background:"var(--bg-card)" }}>
-          <div style={{ padding:"18px 18px 14px", borderBottom:"1px solid var(--border)" }}>
-            <h2 style={{ fontSize:16, fontWeight:800, color:"var(--text-primary)", margin:0 }}>
-              {lang==="ar" ? "رسائلي" : "Messages"}
-            </h2>
-            <p style={{ fontSize:11, color:"var(--text-tertiary)", margin:"4px 0 0" }}>
-              {conversations.length} {lang==="ar" ? "محادثة" : "conversations"}
-            </p>
+        {/* Sidebar — conversation list */}
+        <div style={{
+          width: 280, flexShrink: 0,
+          background: surface, border: `1px solid ${border}`,
+          borderRadius: 16, overflow: "hidden",
+          display: "flex", flexDirection: "column",
+          maxHeight: "calc(100vh - 120px)",
+        }}>
+          <div style={{ padding: "16px 16px 12px", borderBottom: `1px solid ${border}`, fontWeight: 700, fontSize: 15, color: textPri }}>
+            {lang === "ar" ? "المحادثات" : "Conversations"}
           </div>
 
-          <div style={{ flex:1, overflowY:"auto" }}>
-            {conversations.length === 0 ? (
-              <div style={{ padding:"36px 20px", textAlign:"center" }}>
-                <div style={{ fontSize:40, marginBottom:12 }}>💬</div>
-                <p style={{ fontSize:13, color:"var(--text-tertiary)", margin:"0 0 16px" }}>
-                  {lang==="ar" ? "مفيش محادثات لسه" : "No conversations yet"}
-                </p>
-                <Link href="/workshops" style={{ fontSize:13, color:"#E8730A", textDecoration:"none", fontWeight:600 }}>
-                  {lang==="ar" ? "تصفح الورش ←" : "Browse workshops →"}
-                </Link>
-              </div>
-            ) : conversations.map((conv:any) => {
-              const shop = SHOPS.find(s => s.id === conv.shop_id);
-              const cat = shop ? CATEGORIES.find(c => c.id === shop.category) : null;
-              const isActive = conv.id === activeConvId;
-              return (
-                <button key={conv.id} onClick={() => setActiveConvId(conv.id)} style={{
-                  width:"100%", textAlign:dir==="rtl"?"right":"left", direction:dir,
-                  padding:"14px 18px", background:isActive?"rgba(232,115,10,.07)":"transparent",
-                  border:"none", borderBottom:"1px solid var(--border)",
-                  borderInlineStart:isActive?"3px solid #E8730A":"3px solid transparent",
-                  cursor:"pointer", fontFamily:"inherit", display:"flex", alignItems:"center", gap:12,
-                }}
-                  onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = "var(--bg-secondary)"; }}
-                  onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
-                >
-                  <div style={{ width:40, height:40, borderRadius:"50%", background:"rgba(232,115,10,.1)", border:"1px solid rgba(232,115,10,.2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, flexShrink:0 }}>
-                    {cat?.icon ?? "🔧"}
-                  </div>
-                  <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontSize:13, fontWeight:700, color:isActive?"#E8730A":"var(--text-primary)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
-                      {shop?.name ?? `Shop #${conv.shop_id}`}
-                    </div>
-                    <div style={{ fontSize:11, color:"var(--text-tertiary)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", marginTop:2 }}>
-                      {conv.last_message || (lang==="ar" ? "ابدأ المحادثة" : "Start conversation")}
-                    </div>
+          {loadingConvs ? (
+            <div style={{ padding: 24, color: textSec, fontSize: 13, textAlign: "center" }}>
+              {lang === "ar" ? "جاري التحميل..." : "Loading..."}
+            </div>
+          ) : conversations.length === 0 ? (
+            <div style={{ padding: 24, color: textSec, fontSize: 13, textAlign: "center", lineHeight: 1.7 }}>
+              {lang === "ar" ? "لا توجد محادثات بعد.\nتصفح الورش وابدأ محادثة!" : "No conversations yet.\nBrowse workshops to start one!"}
+              <br />
+              <Link href="/workshops" style={{ display: "inline-block", marginTop: 12, padding: "8px 18px", borderRadius: 8, background: accent, color: "#fff", fontSize: 12, fontWeight: 700 }}>
+                {lang === "ar" ? "تصفح الورش" : "Browse workshops"}
+              </Link>
+            </div>
+          ) : (
+            <div style={{ overflowY: "auto", flex: 1 }}>
+              {conversations.map(conv => (
+                <button key={conv.id} onClick={() => setActiveConvId(conv.id)}
+                  style={{
+                    width: "100%", display: "flex", alignItems: "center", gap: 12,
+                    padding: "12px 16px", background: conv.id === activeConvId ? (isDark ? "rgba(33,78,79,.2)" : "rgba(33,78,79,.07)") : "transparent",
+                    border: "none", borderBottom: `1px solid ${border}`,
+                    cursor: "pointer", fontFamily: "inherit", textAlign: dir === "rtl" ? "right" : "left",
+                  }}>
+                  <div style={{ width: 40, height: 40, borderRadius: "50%", background: accent, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>🔧</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: textPri, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{conv.shop_name}</div>
+                    <div style={{ fontSize: 11, color: textSec, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{conv.last_message ?? (lang === "ar" ? "ابدأ المحادثة" : "Start chatting")}</div>
                   </div>
                 </button>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Chat area */}
-        <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden", minWidth:0 }}>
-          {activeConvId && activeShop ? (
+        <div style={{
+          flex: 1, background: surface, border: `1px solid ${border}`,
+          borderRadius: 16, overflow: "hidden",
+          display: "flex", flexDirection: "column",
+          maxHeight: "calc(100vh - 120px)", minHeight: 400,
+        }}>
+          {!activeConvId ? (
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, color: textSec, padding: 24, textAlign: "center" }}>
+              <div style={{ fontSize: 40 }}>💬</div>
+              <p style={{ fontSize: 14, maxWidth: 260, lineHeight: 1.7 }}>
+                {lang === "ar" ? "اختار محادثة من القائمة أو تصفح الورش وابدأ محادثة جديدة" : "Select a conversation or browse workshops to start a new one"}
+              </p>
+            </div>
+          ) : (
             <>
-              {/* Header */}
-              <div style={{ padding:"14px 22px", borderBottom:"1px solid var(--border)", background:"var(--bg-card)", display:"flex", alignItems:"center", gap:14, direction:dir }}>
-                <div style={{ width:44, height:44, borderRadius:"50%", background:"rgba(232,115,10,.1)", border:"1px solid rgba(232,115,10,.2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>
-                  {activeShopCat?.icon ?? "🔧"}
+              {/* Chat header */}
+              <div style={{ padding: "14px 18px", borderBottom: `1px solid ${border}`, display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: accent, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>🔧</div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: textPri }}>{activeConv?.shop_name ?? "Workshop"}</div>
+                  <div style={{ fontSize: 11, color: textSec }}>{lang === "ar" ? "ورشة" : "Workshop"}</div>
                 </div>
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:15, fontWeight:700, color:"var(--text-primary)" }}>{activeShop.name}</div>
-                  <div style={{ fontSize:11, color:"var(--text-tertiary)", marginTop:2 }}>
-                    📍 {activeShop.area[lang]}
-                    {activeShopCat && <span style={{ marginInlineStart:8, color:"#E8730A", fontWeight:600 }}>· {lang==="ar" ? activeShopCat.ar : activeShopCat.en}</span>}
-                  </div>
-                </div>
-                <Link href={`/shop/${activeShop.id}`} style={{ fontSize:12, color:"#E8730A", textDecoration:"none", fontWeight:600, padding:"6px 12px", borderRadius:8, border:"1px solid rgba(232,115,10,.3)", background:"rgba(232,115,10,.06)", flexShrink:0 }}>
-                  {lang==="ar" ? "عرض الورشة" : "View shop"}
-                </Link>
               </div>
 
               {/* Messages */}
-              <div style={{ flex:1, overflowY:"auto", padding:"24px 22px 8px" }}>
-                {messages.length === 0 && (
-                  <div style={{ textAlign:"center", padding:"60px 0" }}>
-                    <div style={{ fontSize:48, marginBottom:14 }}>👋</div>
-                    <p style={{ fontSize:14, fontWeight:600, color:"var(--text-primary)", margin:"0 0 6px" }}>
-                      {lang==="ar" ? `ابدأ محادثة مع ${activeShop.name}` : `Start a conversation with ${activeShop.name}`}
-                    </p>
-                    <p style={{ fontSize:13, color:"var(--text-tertiary)", margin:0 }}>
-                      {lang==="ar" ? "اسأل عن الخدمات أو حدد موعد" : "Ask about services or schedule an appointment"}
-                    </p>
+              <div style={{ flex: 1, overflowY: "auto", padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10 }}>
+                {loadingMsgs ? (
+                  <div style={{ color: textSec, fontSize: 13, textAlign: "center", paddingTop: 20 }}>
+                    {lang === "ar" ? "جاري التحميل..." : "Loading messages..."}
                   </div>
-                )}
-                <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                  {messages.map((msg:any, i:number) => {
-                    const isMe = msg.sender_id === user.id;
+                ) : messages.length === 0 ? (
+                  <div style={{ color: textSec, fontSize: 13, textAlign: "center", paddingTop: 20 }}>
+                    {lang === "ar" ? "ابدأ المحادثة 👋" : "Start the conversation 👋"}
+                  </div>
+                ) : (
+                  messages.map(msg => {
+                    const isMe = msg.sender_id === user?.id;
                     return (
-                      <div key={msg.id ?? i} style={{ display:"flex", justifyContent:isMe?(dir==="rtl"?"flex-start":"flex-end"):(dir==="rtl"?"flex-end":"flex-start") }}>
+                      <div key={msg.id} style={{ display: "flex", justifyContent: isMe ? (dir === "rtl" ? "flex-start" : "flex-end") : (dir === "rtl" ? "flex-end" : "flex-start") }}>
                         <div style={{
-                          maxWidth:"72%", padding:"11px 15px", borderRadius:18,
-                          borderBottomRightRadius: isMe && dir!=="rtl" ? 4 : 18,
-                          borderBottomLeftRadius: isMe && dir==="rtl" ? 4 : 18,
-                          background: isMe ? "#E8730A" : "var(--bg-card)",
-                          color: isMe ? "#fff" : "var(--text-primary)",
-                          border: isMe ? "none" : "1px solid var(--border)",
-                          fontSize:14, lineHeight:1.6, opacity:msg.temp?0.7:1,
-                          boxShadow: isMe ? "0 2px 8px rgba(232,115,10,.25)" : "0 1px 4px rgba(0,0,0,.06)",
+                          maxWidth: "72%", padding: "9px 14px",
+                          borderRadius: isMe ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+                          background: isMe ? accent : (isDark ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.05)"),
+                          color: isMe ? "#fff" : textPri,
+                          fontSize: 13, lineHeight: 1.55,
                         }}>
-                          {msg.content}
-                          <div style={{ fontSize:10, opacity:0.6, marginTop:4, textAlign:dir==="rtl"?"left":"right" }}>
-                            {new Date(msg.created_at).toLocaleTimeString(lang==="ar"?"ar-EG":"en-GB", { hour:"2-digit", minute:"2-digit" })}
+                          {msg.body}
+                          <div style={{ fontSize: 10, marginTop: 4, opacity: 0.6, textAlign: dir === "rtl" ? "left" : "right" }}>
+                            {new Date(msg.created_at).toLocaleTimeString(lang === "ar" ? "ar-EG" : "en-US", { hour: "2-digit", minute: "2-digit" })}
                           </div>
                         </div>
                       </div>
                     );
-                  })}
-                </div>
-                <div ref={bottomRef} style={{ height:4 }} />
+                  })
+                )}
+                <div ref={bottomRef} />
               </div>
 
               {/* Input */}
-              <div style={{ padding:"14px 22px 18px", borderTop:"1px solid var(--border)", background:"var(--bg-card)" }}>
-                <div style={{ display:"flex", gap:10, alignItems:"center" }}>
-                  <input
-                    ref={inputRef}
-                    type="text" value={input}
-                    onChange={e => setInput(e.target.value)}
-                    onKeyDown={e => e.key==="Enter" && !e.shiftKey && handleSend()}
-                    placeholder={lang==="ar" ? "اكتب رسالتك هنا..." : "Type your message..."}
-                    style={{ flex:1, padding:"12px 16px", borderRadius:14, background:"var(--bg-secondary)", border:"1.5px solid var(--border-strong)", outline:"none", color:"var(--text-primary)", fontSize:14, fontFamily:"inherit", direction:dir, textAlign:dir==="rtl"?"right":"left" }}
-                    onFocus={e => (e.target as HTMLInputElement).style.borderColor = "#E8730A"}
-                    onBlur={e => (e.target as HTMLInputElement).style.borderColor = "var(--border-strong)"}
-                  />
-                  <button onClick={handleSend} disabled={!input.trim() || sending}
-                    style={{ width:48, height:48, borderRadius:14, flexShrink:0, background:input.trim()&&!sending?"#E8730A":"var(--bg-secondary)", border:"none", cursor:input.trim()&&!sending?"pointer":"not-allowed", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:input.trim()&&!sending?"0 2px 10px rgba(232,115,10,.3)":"none", transition:"all .15s" }}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={input.trim()&&!sending?"#fff":"var(--text-tertiary)"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
-                    </svg>
-                  </button>
-                </div>
-                <p style={{ fontSize:10, color:"var(--text-tertiary)", margin:"8px 0 0", textAlign:"center" }}>
-                  {lang==="ar" ? "🔒 رسائلك محمية داخل المنصة" : "🔒 Your messages are secure within the platform"}
-                </p>
-              </div>
+              <form onSubmit={sendMessage} style={{ padding: "12px 16px", borderTop: `1px solid ${border}`, display: "flex", gap: 10, alignItems: "center" }}>
+                <input
+                  value={newMsg}
+                  onChange={e => setNewMsg(e.target.value)}
+                  placeholder={lang === "ar" ? "اكتب رسالتك..." : "Type a message..."}
+                  style={{
+                    flex: 1, padding: "10px 14px",
+                    background: isDark ? "rgba(255,255,255,.06)" : "rgba(0,0,0,.04)",
+                    border: `1px solid ${border}`,
+                    borderRadius: 12, color: textPri,
+                    fontSize: 13, fontFamily: "inherit",
+                    outline: "none", direction: dir,
+                  }}
+                  onFocus={e => (e.target as HTMLInputElement).style.borderColor = accent}
+                  onBlur={e => (e.target as HTMLInputElement).style.borderColor = border}
+                />
+                <button type="submit" disabled={!newMsg.trim() || sending}
+                  style={{
+                    width: 42, height: 42, borderRadius: "50%",
+                    background: newMsg.trim() ? accent : (isDark ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.06)"),
+                    border: "none", cursor: newMsg.trim() ? "pointer" : "default",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 18, transition: "all .15s", flexShrink: 0,
+                  }}>
+                  {sending ? "⏳" : dir === "rtl" ? "⬅️" : "➡️"}
+                </button>
+              </form>
             </>
-          ) : (
-            <div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:16, padding:24 }}>
-              <div style={{ width:80, height:80, borderRadius:"50%", background:"rgba(232,115,10,.08)", border:"1px solid rgba(232,115,10,.15)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:36 }}>💬</div>
-              <p style={{ fontSize:16, fontWeight:700, color:"var(--text-primary)", margin:0 }}>
-                {lang==="ar" ? "اختار محادثة" : "Select a conversation"}
-              </p>
-              <Link href="/workshops" style={{ padding:"10px 24px", borderRadius:10, background:"#E8730A", color:"#fff", fontSize:13, fontWeight:700, textDecoration:"none", fontFamily:"inherit" }}>
-                {lang==="ar" ? "تصفح الورش" : "Browse workshops"}
-              </Link>
-            </div>
           )}
         </div>
       </div>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
-  );
-}
-
-export default function ChatPage() {
-  return (
-    <Suspense fallback={<div style={{ minHeight:"100vh", background:"var(--bg)" }} />}>
-      <ChatInner />
-    </Suspense>
   );
 }

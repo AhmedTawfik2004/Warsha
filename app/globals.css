@@ -4,6 +4,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── FIX: Override Tailwind base link styles ────────────────────────────── */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
 /* ─── DESIGN TOKENS ──────────────────────────────────────────────────────────
    Warsha — Egyptian automotive marketplace
    Design direction: Petrol Teal, Sage, and warm neutral automotive aesthetic.

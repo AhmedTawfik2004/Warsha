@@ -1,461 +1,350 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import type { Lang } from "../lib/translations";
+import { t } from "../lib/translations";
+import { getCurrentUser, signOut } from "../lib/supabase";
 
-type Lang = "ar" | "en";
-type Theme = "dark" | "light";
+const ADMIN_EMAIL = "tkelite2004@gmail.com";
 
-type NavbarProps = {
+interface NavbarProps {
   lang: Lang;
-  theme: Theme;
+  theme: "dark" | "light";
   onToggleLang: () => void;
   onToggleTheme: () => void;
-};
+}
 
-export default function Navbar({
-  lang,
-  theme,
-  onToggleLang,
-  onToggleTheme,
-}: NavbarProps) {
-  const isArabic = lang === "ar";
+// Clean SVG wordmark logo — no image dependency
+export function WarshaLogo({ size = 36, isDark = true }: { size?: number; isDark?: boolean }) {
+  const teal = "#214E4F";
+  const sage = "#6E7F77";
+  const light = "#EAECE9";
+  const dark = "#0F1414";
 
-  const labels = {
-    home: isArabic ? "الرئيسية" : "Home",
-    workshops: isArabic ? "الورش" : "Workshops",
-    map: isArabic ? "الخريطة" : "Map",
-    diagnose: isArabic ? "تشخيص" : "Diagnose",
-    about: isArabic ? "عن ورشة" : "About",
-    signIn: isArabic ? "تسجيل الدخول" : "Sign in",
-    listShop: isArabic ? "سجّل ورشتك" : "List your shop",
-    language: isArabic ? "English" : "عربي",
-  };
+  return (
+    <svg
+      width={size * 2.8}
+      height={size}
+      viewBox="0 0 100 36"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ display: "block", flexShrink: 0 }}
+    >
+      {/* Icon mark: stylised W with wrench notch */}
+      <rect x="0" y="0" width="36" height="36" rx="9" fill={isDark ? teal : teal} />
+      {/* W shape */}
+      <polyline
+        points="7,10 12,26 18,16 24,26 29,10"
+        stroke={light}
+        strokeWidth="3.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      {/* Small wrench dot at bottom-right of icon */}
+      <circle cx="29" cy="26" r="2.2" fill={sage} />
+
+      {/* Wordmark: "warsha" */}
+      <text
+        x="43"
+        y="22"
+        fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        fontWeight="800"
+        fontSize="15"
+        letterSpacing="-0.5"
+        fill={isDark ? light : dark}
+      >
+        warsha
+      </text>
+      {/* .eg accent */}
+      <text
+        x="43"
+        y="33"
+        fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        fontWeight="500"
+        fontSize="8"
+        letterSpacing="1"
+        fill={sage}
+        textAnchor="start"
+      >
+        WORKSHOPS
+      </text>
+    </svg>
+  );
+}
+
+export default function Navbar({ lang, theme, onToggleLang, onToggleTheme }: NavbarProps) {
+  const safeLang: Lang = lang === "en" ? "en" : "ar";
+  const tr = t[safeLang];
+  const pathname = usePathname();
+  const router = useRouter();
+  const dir = safeLang === "ar" ? "rtl" : "ltr";
+  const isDark = theme === "dark";
+
+  const [user, setUser] = useState<any>(null);
+  const [userLoading, setUserLoading] = useState(true);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const bg = isDark ? "rgba(10,10,9,0.97)" : "rgba(255,255,255,0.97)";
+  const textPrimary = isDark ? "#EAECE9" : "#111110";
+  const textSecondary = isDark ? "rgba(234,236,233,.50)" : "rgba(0,0,0,.45)";
+  const borderColor = isDark ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.08)";
+  const cardBg = isDark ? "#1F2A2E" : "#ffffff";
+  const accent = isDark ? "#6E7F77" : "#214E4F";
+
+  useEffect(() => {
+    getCurrentUser()
+      .then(u => { setUser(u); setUserLoading(false); })
+      .catch(() => { setUser(null); setUserLoading(false); });
+  }, [pathname]);
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setDropdownOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  useEffect(() => {
+    if (mobileMenuOpen) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileMenuOpen]);
+
+  async function handleLogout() {
+    setLoggingOut(true);
+    setDropdownOpen(false);
+    setMobileMenuOpen(false);
+    await signOut();
+    setUser(null);
+    setLoggingOut(false);
+    router.push("/");
+    router.refresh();
+  }
+
+  const navItems = [
+    { label: safeLang === "ar" ? "الرئيسية" : "Home",     href: "/" },
+    { label: tr.navShops,                                   href: "/workshops" },
+    { label: tr.navMap,                                     href: "/map" },
+    { label: safeLang === "ar" ? "تشخيص" : "Diagnose",    href: "/diagnose" },
+    { label: tr.navAbout,                                   href: "/about" },
+  ] as const;
+
+  const initials = user?.profile?.full_name
+    ? user.profile.full_name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2)
+    : user?.email?.[0]?.toUpperCase() ?? "?";
+  const firstName = user?.profile?.full_name?.split(" ")[0] ?? user?.email?.split("@")[0] ?? "";
+  const isAdminUser = user?.email === ADMIN_EMAIL;
+
+  const dropdownItems = [
+    { href: "/dashboard", icon: "👤", label: safeLang === "ar" ? "حسابي" : "My account" },
+    { href: "/chat",      icon: "💬", label: safeLang === "ar" ? "رسائلي" : "My messages" },
+    { href: "/workshops", icon: "🔍", label: safeLang === "ar" ? "تصفح الورش" : "Browse workshops" },
+    { href: "/diagnose",  icon: "🔧", label: safeLang === "ar" ? "تشخيص مشكلة" : "Diagnose problem" },
+    { href: "/list-shop", icon: "🏪", label: safeLang === "ar" ? "سجّل ورشتك" : "List your shop" },
+    ...(isAdminUser ? [{ href: "/admin", icon: "⚙️", label: "Admin panel" }] : []),
+  ];
 
   return (
     <>
-      <header className="warsha-navbar" dir={isArabic ? "rtl" : "ltr"}>
+      <nav style={{
+        position: "sticky", top: 0, zIndex: 100,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "0 20px", height: 60,
+        background: bg,
+        borderBottom: `1px solid ${borderColor}`,
+        backdropFilter: "blur(20px) saturate(180%)",
+        boxShadow: isDark ? "0 1px 20px rgba(0,0,0,.4)" : "0 1px 12px rgba(0,0,0,.06)",
+        direction: dir,
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+      }}>
+
         {/* LOGO */}
-        <Link href="/" className="warsha-brand">
-          <div className="warsha-brand-mark">
-            <svg
-              width="19"
-              height="19"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.7"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="8.5" />
-              <path d="M9 9l2 2" />
-              <path d="M13 13l2 2" />
-              <path d="M15 9l-2 2" />
-              <path d="M11 13l-2 2" />
-              <circle cx="12" cy="12" r="2" />
-            </svg>
-          </div>
-
-          <div className="warsha-brand-text">
-            <div className="warsha-brand-name">
-              Warsha<span>.eg</span>
-            </div>
-
-            <div className="warsha-brand-subtitle">
-              WORKSHOP DIRECTORY
-            </div>
-          </div>
+        <Link href="/" style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
+          <WarshaLogo size={30} isDark={isDark} />
         </Link>
 
-        {/* DESKTOP NAVIGATION */}
-        <nav className="warsha-main-links">
-          <Link href="/" className="warsha-main-link">
-            {labels.home}
-          </Link>
-
-          <Link href="/workshops" className="warsha-main-link">
-            {labels.workshops}
-          </Link>
-
-          <Link href="/map" className="warsha-main-link">
-            {labels.map}
-          </Link>
-
-          <Link href="/diagnose" className="warsha-main-link">
-            {labels.diagnose}
-          </Link>
-
-          <Link href="/about" className="warsha-main-link">
-            {labels.about}
-          </Link>
-        </nav>
-
-        {/* RIGHT ACTIONS */}
-        <div className="warsha-nav-actions">
-          <button
-            type="button"
-            onClick={onToggleLang}
-            className="warsha-nav-button"
-          >
-            {labels.language}
-          </button>
-
-          <button
-            type="button"
-            onClick={onToggleTheme}
-            className="warsha-theme-button"
-            aria-label={
-              theme === "dark"
-                ? "Switch to light mode"
-                : "Switch to dark mode"
-            }
-          >
-            {theme === "dark" ? (
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="12" cy="12" r="4" />
-                <path d="M12 2v2" />
-                <path d="M12 20v2" />
-                <path d="m4.93 4.93 1.42 1.42" />
-                <path d="m17.65 17.65 1.42 1.42" />
-                <path d="M2 12h2" />
-                <path d="M20 12h2" />
-                <path d="m6.35 17.65-1.42 1.42" />
-                <path d="m19.07 4.93-1.42 1.42" />
-              </svg>
-            ) : (
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.7 6.7 0 0 0 9.8 9.8Z" />
-              </svg>
-            )}
-          </button>
-
-          <Link href="/login" className="warsha-signin">
-            {labels.signIn}
-          </Link>
-
-          <Link href="/list-shop" className="warsha-list-shop">
-            {labels.listShop}
-          </Link>
+        {/* CENTER NAV — desktop only */}
+        <div className="warsha-desktop-nav" style={{ display: "flex", gap: 2, alignItems: "center" }}>
+          {navItems.map(item => {
+            const isActive = pathname === item.href;
+            return (
+              <Link key={item.href} href={item.href} style={{
+                padding: "6px 12px", borderRadius: 8,
+                fontSize: 13, fontWeight: isActive ? 600 : 400,
+                color: isActive ? accent : textSecondary,
+                background: isActive ? (isDark ? "rgba(33,78,79,.15)" : "rgba(33,78,79,.08)") : "transparent",
+                transition: "all .15s",
+              }}
+                onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLAnchorElement).style.color = textPrimary; (e.currentTarget as HTMLAnchorElement).style.background = isDark ? "rgba(255,255,255,.05)" : "rgba(0,0,0,.04)"; } }}
+                onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLAnchorElement).style.color = textSecondary; (e.currentTarget as HTMLAnchorElement).style.background = "transparent"; } }}
+              >{item.label}</Link>
+            );
+          })}
         </div>
-      </header>
 
-      <style jsx>{`
-        .warsha-navbar {
-          position: sticky;
-          top: 0;
-          z-index: 100;
+        {/* RIGHT */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
 
-          width: 100%;
-          height: 64px;
+          {/* Lang + Theme — desktop only */}
+          <button onClick={onToggleLang} className="warsha-desktop-nav" style={{ height: 32, padding: "0 10px", borderRadius: 8, background: "transparent", border: `1px solid ${borderColor}`, cursor: "pointer", fontSize: 12, fontWeight: 600, color: textSecondary, fontFamily: "inherit" }}>
+            {safeLang === "ar" ? "EN" : "عربي"}
+          </button>
+          <button onClick={onToggleTheme} className="warsha-desktop-nav" style={{ width: 32, height: 32, borderRadius: 8, background: "transparent", border: `1px solid ${borderColor}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>
+            {isDark ? "☀️" : "🌙"}
+          </button>
 
-          display: flex;
-          align-items: center;
+          {/* User — desktop only */}
+          {!userLoading && (
+            <div ref={dropdownRef} className="warsha-desktop-nav" style={{ position: "relative" }}>
+              {user ? (
+                <>
+                  <button onClick={() => setDropdownOpen(o => !o)} style={{
+                    display: "flex", alignItems: "center", gap: 7, height: 32, padding: "0 10px", borderRadius: 8,
+                    background: dropdownOpen ? (isDark ? "rgba(33,78,79,.2)" : "rgba(33,78,79,.1)") : (isDark ? "rgba(255,255,255,.06)" : "rgba(0,0,0,.04)"),
+                    border: dropdownOpen ? `1px solid ${accent}` : `1px solid ${borderColor}`,
+                    cursor: "pointer", fontFamily: "inherit",
+                  }}>
+                    {user.profile?.avatar_url ? (
+                      <img src={user.profile.avatar_url} alt="" width={20} height={20} style={{ borderRadius: "50%", objectFit: "cover" }} />
+                    ) : (
+                      <div style={{ width: 20, height: 20, borderRadius: "50%", background: accent, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 800 }}>{initials}</div>
+                    )}
+                    <span style={{ fontSize: 13, fontWeight: 600, color: textPrimary, maxWidth: 72, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{firstName}</span>
+                    <span style={{ fontSize: 9, color: textSecondary, transform: dropdownOpen ? "rotate(180deg)" : "none", transition: "transform .2s", display: "block" }}>▾</span>
+                  </button>
 
-          padding: 0 24px;
+                  {dropdownOpen && (
+                    <div style={{
+                      position: "absolute", top: "calc(100% + 8px)",
+                      [dir === "rtl" ? "left" : "right"]: 0,
+                      minWidth: 210, background: cardBg,
+                      border: `1px solid ${borderColor}`,
+                      borderRadius: 16, boxShadow: "0 16px 48px rgba(0,0,0,.18)",
+                      overflow: "hidden", zIndex: 200,
+                    }}>
+                      <div style={{ padding: "12px 16px", borderBottom: `1px solid ${borderColor}` }}>
+                        <p style={{ fontSize: 13, fontWeight: 700, color: textPrimary, margin: "0 0 2px" }}>{user.profile?.full_name ?? user.email}</p>
+                        <p style={{ fontSize: 11, color: textSecondary, margin: 0 }}>
+                          {user.profile?.role === "shop_owner" ? (safeLang === "ar" ? "صاحب ورشة" : "Shop owner") : (safeLang === "ar" ? "صاحب سيارة" : "Car owner")}
+                        </p>
+                      </div>
+                      {dropdownItems.map(item => (
+                        <Link key={item.href} href={item.href} onClick={() => setDropdownOpen(false)}
+                          style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", fontSize: 13, color: textSecondary, borderBottom: `1px solid ${borderColor}`, transition: "all .12s" }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = isDark ? "rgba(33,78,79,.15)" : "rgba(33,78,79,.07)"; (e.currentTarget as HTMLAnchorElement).style.color = accent; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = "transparent"; (e.currentTarget as HTMLAnchorElement).style.color = textSecondary; }}
+                        >
+                          <span style={{ fontSize: 15 }}>{item.icon}</span> {item.label}
+                        </Link>
+                      ))}
+                      <button onClick={handleLogout} disabled={loggingOut}
+                        style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: 13, color: "#EF4444", textAlign: dir === "rtl" ? "right" : "left" }}
+                        onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = "rgba(239,68,68,.07)"}
+                        onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = "transparent"}
+                      >
+                        <span>🚪</span>
+                        {loggingOut ? (safeLang === "ar" ? "جاري الخروج..." : "Signing out...") : (safeLang === "ar" ? "تسجيل الخروج" : "Sign out")}
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <Link href="/auth/login" style={{ height: 32, padding: "0 14px", borderRadius: 8, background: "transparent", border: `1px solid ${borderColor}`, fontSize: 13, fontWeight: 600, color: textSecondary, display: "flex", alignItems: "center" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = accent; (e.currentTarget as HTMLAnchorElement).style.color = accent; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = borderColor; (e.currentTarget as HTMLAnchorElement).style.color = textSecondary; }}
+                >
+                  {safeLang === "ar" ? "دخول" : "Sign in"}
+                </Link>
+              )}
+            </div>
+          )}
 
-          background: color-mix(
-            in srgb,
-            var(--bg) 92%,
-            transparent
-          );
+          {/* List shop CTA — desktop only */}
+          <Link href="/list-shop" className="warsha-desktop-nav" style={{ height: 32, padding: "0 14px", borderRadius: 8, background: accent, color: "#fff", display: "flex", alignItems: "center", fontSize: 13, fontWeight: 700, boxShadow: `0 2px 10px ${accent}55`, flexShrink: 0 }}
+            onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.opacity = "0.85"}
+            onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.opacity = "1"}
+          >{tr.navRegisterCta}</Link>
 
-          border-bottom: 1px solid var(--border);
+          {/* Hamburger — mobile only */}
+          <button onClick={() => setMobileMenuOpen(o => !o)} className="warsha-mobile-nav"
+            style={{ display: "none", width: 36, height: 36, borderRadius: 8, background: isDark ? "rgba(255,255,255,.06)" : "rgba(0,0,0,.05)", border: `1px solid ${borderColor}`, cursor: "pointer", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 5, padding: 0 }}>
+            {[0,1,2].map(i => (
+              <span key={i} style={{ display: "block", width: 16, height: 2, background: textPrimary, borderRadius: 2, transition: "all .2s",
+                transform: mobileMenuOpen && i === 0 ? "translateY(7px) rotate(45deg)" : mobileMenuOpen && i === 2 ? "translateY(-7px) rotate(-45deg)" : "none",
+                opacity: mobileMenuOpen && i === 1 ? 0 : 1,
+              }} />
+            ))}
+          </button>
+        </div>
+      </nav>
 
-          backdrop-filter: blur(18px);
-          -webkit-backdrop-filter: blur(18px);
+      {/* Mobile slide-down menu */}
+      {mobileMenuOpen && (
+        <div style={{
+          position: "fixed", top: 60, left: 0, right: 0, bottom: 0, zIndex: 99,
+          background: bg, overflowY: "auto", direction: dir,
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        }}>
+          <div style={{ padding: "16px 20px", borderBottom: `1px solid ${borderColor}` }}>
+            {user && (
+              <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 0", marginBottom: 8 }}>
+                <div style={{ width: 40, height: 40, borderRadius: "50%", background: accent, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800 }}>{initials}</div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: textPrimary }}>{user.profile?.full_name ?? user.email}</div>
+                  <div style={{ fontSize: 12, color: textSecondary }}>{user.profile?.role === "shop_owner" ? (safeLang === "ar" ? "صاحب ورشة" : "Shop owner") : (safeLang === "ar" ? "صاحب سيارة" : "Car owner")}</div>
+                </div>
+              </div>
+            )}
+            {navItems.map(item => (
+              <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)}
+                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 0", fontSize: 16, fontWeight: pathname === item.href ? 700 : 400, color: pathname === item.href ? accent : textPrimary, borderBottom: `1px solid ${borderColor}` }}>
+                {item.label}
+                <span style={{ color: isDark ? "rgba(255,255,255,.25)" : "rgba(0,0,0,.25)", fontSize: 14 }}>{dir === "rtl" ? "←" : "→"}</span>
+              </Link>
+            ))}
+          </div>
 
-          box-sizing: border-box;
+          <div style={{ padding: "16px 20px" }}>
+            <Link href="/list-shop" onClick={() => setMobileMenuOpen(false)} style={{ display: "block", padding: "14px 0", textAlign: "center", background: accent, color: "#fff", borderRadius: 12, fontSize: 15, fontWeight: 700, marginBottom: 12 }}>
+              {tr.navRegisterCta}
+            </Link>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => { onToggleLang(); }} style={{ flex: 1, padding: "11px 0", borderRadius: 10, border: `1px solid ${borderColor}`, background: "transparent", fontSize: 14, fontWeight: 600, color: textSecondary, cursor: "pointer", fontFamily: "inherit" }}>
+                {safeLang === "ar" ? "English" : "عربي"}
+              </button>
+              <button onClick={onToggleTheme} style={{ flex: 1, padding: "11px 0", borderRadius: 10, border: `1px solid ${borderColor}`, background: "transparent", fontSize: 14, cursor: "pointer", fontFamily: "inherit", color: textSecondary }}>
+                {isDark ? "☀️ Light" : "🌙 Dark"}
+              </button>
+            </div>
+
+            {user ? (
+              <button onClick={handleLogout} style={{ width: "100%", marginTop: 12, padding: "13px 0", borderRadius: 10, border: "1px solid rgba(239,68,68,.3)", background: "rgba(239,68,68,.06)", color: "#EF4444", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                {safeLang === "ar" ? "تسجيل الخروج" : "Sign out"}
+              </button>
+            ) : (
+              <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)} style={{ display: "block", marginTop: 12, padding: "13px 0", borderRadius: 10, border: `1px solid ${borderColor}`, textAlign: "center", fontSize: 14, fontWeight: 600, color: textPrimary }}>
+                {safeLang === "ar" ? "تسجيل الدخول" : "Sign in"}
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @media (max-width: 768px) {
+          .warsha-desktop-nav { display: none !important; }
+          .warsha-mobile-nav { display: flex !important; }
         }
-
-        .warsha-brand {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-
-          text-decoration: none;
-          flex-shrink: 0;
-        }
-
-        .warsha-brand-mark {
-          width: 34px;
-          height: 34px;
-
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          border-radius: 10px;
-
-          color: var(--text-primary);
-
-          background: var(--accent-muted);
-
-          border: 1px solid var(--accent-border);
-
-          box-shadow: 0 4px 16px var(--accent-muted);
-
-          transition:
-            transform 0.2s ease,
-            background 0.2s ease;
-        }
-
-        .warsha-brand:hover .warsha-brand-mark {
-          transform: translateY(-1px);
-          background: var(--accent-border);
-        }
-
-        .warsha-brand-text {
-          display: flex;
-          flex-direction: column;
-          line-height: 1;
-        }
-
-        .warsha-brand-name {
-          font-size: 17px;
-          font-weight: 850;
-          letter-spacing: -0.045em;
-          color: var(--text-primary);
-        }
-
-        .warsha-brand-name span {
-          color: var(--accent);
-        }
-
-        .warsha-brand-subtitle {
-          margin-top: 4px;
-
-          font-size: 7px;
-          font-weight: 700;
-
-          letter-spacing: 0.13em;
-
-          color: var(--text-tertiary);
-        }
-
-        .warsha-main-links {
-          position: absolute;
-          left: 50%;
-          transform: translateX(-50%);
-
-          display: flex;
-          align-items: center;
-          gap: 3px;
-
-          white-space: nowrap;
-        }
-
-        .warsha-main-link {
-          position: relative;
-
-          padding: 8px 11px;
-
-          color: var(--text-secondary);
-
-          text-decoration: none;
-
-          font-size: 13px;
-          font-weight: 550;
-
-          border-radius: 9px;
-
-          transition:
-            color 0.18s ease,
-            background 0.18s ease;
-        }
-
-        .warsha-main-link:hover {
-          color: var(--text-primary);
-          background: var(--accent-muted);
-        }
-
-        .warsha-nav-actions {
-          margin-inline-start: auto;
-
-          display: flex;
-          align-items: center;
-          gap: 7px;
-        }
-
-        .warsha-nav-button,
-        .warsha-theme-button {
-          height: 36px;
-
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          color: var(--text-secondary);
-
-          background: var(--bg-secondary);
-
-          border: 1px solid var(--border);
-
-          cursor: pointer;
-
-          transition:
-            color 0.18s ease,
-            background 0.18s ease,
-            border-color 0.18s ease,
-            transform 0.18s ease;
-        }
-
-        .warsha-nav-button {
-          padding: 0 11px;
-          border-radius: 9px;
-
-          font-family: inherit;
-          font-size: 11px;
-          font-weight: 650;
-        }
-
-        .warsha-theme-button {
-          width: 36px;
-          border-radius: 9px;
-        }
-
-        .warsha-nav-button:hover,
-        .warsha-theme-button:hover {
-          color: var(--text-primary);
-          background: var(--accent-muted);
-          border-color: var(--accent-border);
-        }
-
-        .warsha-theme-button:hover {
-          transform: translateY(-1px);
-        }
-
-        .warsha-signin {
-          height: 36px;
-
-          display: flex;
-          align-items: center;
-
-          padding: 0 12px;
-
-          color: var(--text-secondary);
-
-          border: 1px solid transparent;
-
-          border-radius: 9px;
-
-          text-decoration: none;
-
-          font-size: 12px;
-          font-weight: 650;
-
-          transition:
-            color 0.18s ease,
-            background 0.18s ease;
-        }
-
-        .warsha-signin:hover {
-          color: var(--text-primary);
-          background: var(--accent-muted);
-        }
-
-        .warsha-list-shop {
-          height: 36px;
-
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          padding: 0 14px;
-
-          color: var(--text-inverse);
-
-          background: var(--accent);
-
-          border: 1px solid var(--accent-border);
-
-          border-radius: 9px;
-
-          text-decoration: none;
-
-          font-size: 12px;
-          font-weight: 750;
-
-          box-shadow: 0 4px 16px var(--accent-muted);
-
-          transition:
-            background 0.18s ease,
-            transform 0.18s ease,
-            box-shadow 0.18s ease;
-        }
-
-        .warsha-list-shop:hover {
-          background: var(--accent-hover);
-          transform: translateY(-1px);
-          box-shadow: var(--shadow-accent);
-        }
-
-        @media (max-width: 1050px) {
-          .warsha-main-link {
-            padding: 8px 7px;
-            font-size: 12px;
-          }
-
-          .warsha-signin {
-            display: none;
-          }
-        }
-
-        @media (max-width: 800px) {
-          .warsha-navbar {
-            height: 60px;
-            padding: 0 14px;
-          }
-
-          .warsha-main-links {
-            display: none;
-          }
-
-          .warsha-brand-subtitle {
-            display: none;
-          }
-
-          .warsha-brand-name {
-            font-size: 16px;
-          }
-
-          .warsha-brand-mark {
-            width: 32px;
-            height: 32px;
-          }
-        }
-
-        @media (max-width: 450px) {
-          .warsha-nav-button {
-            font-size: 10px;
-            padding: 0 8px;
-          }
-
-          .warsha-list-shop {
-            display: none;
-          }
-
-          .warsha-nav-actions {
-            gap: 5px;
-          }
+        @media (min-width: 769px) {
+          .warsha-mobile-nav { display: none !important; }
         }
       `}</style>
     </>
