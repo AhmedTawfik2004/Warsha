@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import Navbar from "../components/Navbar";
@@ -49,7 +49,7 @@ interface Conversation {
   unread?: number;
 }
 
-export default function ChatPage() {
+function ChatPageInner() {
   const { theme, lang, toggleTheme, toggleLang, mounted } = useThemeAndLang();
   const dir = lang === "ar" ? "rtl" : "ltr";
   const isDark = theme === "dark";
@@ -89,7 +89,6 @@ export default function ChatPage() {
       const shopInfo = SHOPS.find(s => String(s.id) === shopId);
       const shopName = shopInfo?.name ?? "Workshop";
 
-      // Check if conversation already exists
       const { data: existing } = await sb
         .from("conversations")
         .select("id")
@@ -100,7 +99,7 @@ export default function ChatPage() {
       if (existing) {
         setActiveConvId(existing.id);
       } else {
-        const { data: created, error } = await sb
+        const { data: created } = await sb
           .from("conversations")
           .insert({ shop_id: shopId, user_id: user.id, shop_name: shopName })
           .select("id")
@@ -144,7 +143,6 @@ export default function ChatPage() {
         setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
       });
 
-    // Realtime subscription
     const channel = sb
       .channel(`msgs-${activeConvId}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${activeConvId}` },
@@ -168,7 +166,6 @@ export default function ChatPage() {
       sender_id: user.id,
       body: newMsg.trim(),
     });
-    // Update conversation timestamp
     await sb.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", activeConvId);
     setNewMsg("");
     setSending(false);
@@ -339,5 +336,13 @@ export default function ChatPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={null}>
+      <ChatPageInner />
+    </Suspense>
   );
 }
