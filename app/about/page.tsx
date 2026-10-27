@@ -158,8 +158,8 @@ export default function AboutPage() {
         <div style={{ maxWidth: 700, margin: "0 auto" }}>
           <div style={{ display: "flex", justifyContent: "center", gap: 48, flexWrap: "wrap", textAlign: "center" }}>
             {[
-              { v: lang === "ar" ? "٦٠٠+" : "600+", l: lang === "ar" ? "ورشة مضافة" : "Workshops listed" },
-              { v: lang === "ar" ? "١٣" : "13",     l: lang === "ar" ? "تخصص" : "Specialisations" },
+              { v: lang === "ar" ? "٦٠٠+" : "67+", l: lang === "ar" ? "ورشة مضافة" : "Workshops listed" },
+              { v: lang === "ar" ? "١٣" : "12",     l: lang === "ar" ? "تخصص" : "Specialisations" },
               { v: lang === "ar" ? "٢٠٢٦" : "2026", l: lang === "ar" ? "سنة التأسيس" : "Founded" },
               { v: lang === "ar" ? "مجاناً" : "Free", l: lang === "ar" ? "خلال البيتا" : "During beta" },
             ].map(s => (

@@ -32,7 +32,6 @@ export function WarshaLogo({ size = 36, isDark = true }: { size?: number; isDark
       xmlns="http://www.w3.org/2000/svg"
       style={{ display: "block", flexShrink: 0 }}
     >
-      {/* Icon mark: stylised W with wrench notch */}
       <rect x="0" y="0" width="36" height="36" rx="9" fill={isDark ? teal : teal} />
       {/* W shape */}
       <polyline
@@ -56,7 +55,7 @@ export function WarshaLogo({ size = 36, isDark = true }: { size?: number; isDark
         letterSpacing="-0.5"
         fill={isDark ? light : dark}
       >
-        warsha
+        Warsha
       </text>
       {/* .eg accent */}
       <text

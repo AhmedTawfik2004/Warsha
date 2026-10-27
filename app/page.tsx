@@ -302,34 +302,6 @@ export default function HomePage() {
             margin: "0 auto",
           }}
         >
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 7,
-              padding: "6px 11px",
-              marginBottom: 18,
-              borderRadius: 99,
-              background: "var(--accent-muted)",
-              border: "1px solid var(--accent-border)",
-              color: "var(--accent)",
-              fontSize: 11,
-              fontWeight: 700,
-            }}
-          >
-            <span
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: "50%",
-                background: "var(--accent)",
-              }}
-            />
-
-            {lang === "ar"
-              ? "دليل ورش السيارات في مصر"
-              : "Egypt's car workshop directory"}
-          </div>
 
           <h1
             style={{

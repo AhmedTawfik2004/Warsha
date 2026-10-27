@@ -108,7 +108,7 @@ function WorkshopsInner() {
 
       {/* Category pills */}
       <div style={{ borderBottom: "1px solid var(--border)", background: "var(--bg)" }}>
-        <div style={{ maxWidth: 1040, margin: "0 auto", padding: "12px 20px", overflowX: "auto", display: "flex", gap: 8, scrollbarWidth: "none" }}>
+        <div style={{ maxWidth: 1600, margin: "0 auto", padding: "12px 20px", overflowX: "auto", display: "flex", gap: 8, scrollbarWidth: "none" }}>
           <button onClick={() => setActiveCat("all")} style={{
             padding: "7px 16px", borderRadius: 99, fontSize: 12, fontWeight: 600,
             cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0,
@@ -125,7 +125,7 @@ function WorkshopsInner() {
             return (
               <button key={cat.id} onClick={() => setActiveCat(cat.id)} style={{
                 padding: "7px 14px", borderRadius: 99, fontSize: 12, fontWeight: 600,
-                cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 5,
+                cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 0,
                 whiteSpace: "nowrap", flexShrink: 0,
                 background: isActive ? `rgba(${rgb},.12)` : "var(--bg-card)",
                 color: isActive ? cat.accent : "var(--text-secondary)",
