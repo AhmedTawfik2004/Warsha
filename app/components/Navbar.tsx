@@ -16,59 +16,70 @@ interface NavbarProps {
   onToggleTheme: () => void;
 }
 
-// Clean SVG wordmark logo — no image dependency
-export function WarshaLogo({ size = 36, isDark = true }: { size?: number; isDark?: boolean }) {
-  const teal = "#214E4F";
-  const sage = "#6E7F77";
-  const light = "#EAECE9";
-  const dark = "#0F1414";
+// Warsha logo — wrench-W wordmark + car silhouette, icon only (no separate text label)
+export function WarshaLogo({ size = 36 }: { size?: number }) {
+  // Scale everything relative to `size` (height). Width = size * 3 to fit the wordmark.
+  const w = size * 3;
+  const h = size;
 
   return (
     <svg
-      width={size * 2.8}
-      height={size}
-      viewBox="0 0 100 36"
+      width={w}
+      height={h}
+      viewBox="0 0 300 100"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       style={{ display: "block", flexShrink: 0 }}
+      aria-label="Warsha"
     >
-      <rect x="0" y="0" width="36" height="36" rx="9" fill={isDark ? teal : teal} />
-      {/* W shape */}
-      <polyline
-        points="7,10 12,26 18,16 24,26 29,10"
-        stroke={light}
-        strokeWidth="3.2"
+      {/* ── Car silhouette (sage, sits above the text) ── */}
+      <path
+        d="M72 42 Q110 10 165 12 Q210 13 245 28 Q268 36 272 44"
+        stroke="#6E7F77"
+        strokeWidth="5"
         strokeLinecap="round"
-        strokeLinejoin="round"
         fill="none"
       />
-      {/* Small wrench dot at bottom-right of icon */}
-      <circle cx="29" cy="26" r="2.2" fill={sage} />
 
-      {/* Wordmark: "warsha" */}
+      {/* ── "Warsha" wordmark in petrol teal ── */}
+      {/* W with wrench hole cut into the left leg */}
+      {/* We draw the W as a polyline and overlay the wrench circle */}
+      <g fill="#214E4F">
+        {/* Left leg of W */}
+        <polygon points="14,22 26,22 38,68 30,68" />
+        {/* Middle-left leg */}
+        <polygon points="30,68 38,68 50,38 42,38" />
+        {/* Middle-right leg */}
+        <polygon points="42,38 50,38 62,68 54,68" />
+        {/* Right leg */}
+        <polygon points="54,68 66,68 78,22 66,22" />
+      </g>
+
+      {/* Wrench U-shape cut into the W (left leg top) — drawn as teal shape on top */}
+      {/* Wrench open end (U) centered ~x=20, y=28 */}
+      <g>
+        {/* Wrench fork — two prongs */}
+        <rect x="15" y="22" width="6" height="18" rx="3" fill="#214E4F" />
+        <rect x="25" y="22" width="6" height="18" rx="3" fill="#214E4F" />
+        {/* Bridge between prongs */}
+        <rect x="15" y="36" width="16" height="6" rx="3" fill="#214E4F" />
+        {/* Wrench handle going down */}
+        <rect x="19" y="40" width="8" height="22" rx="4" fill="#214E4F" />
+        {/* Cut-out gap between prongs to form U */}
+        <rect x="21" y="22" width="4" height="16" rx="0" fill="#FAF7F2" />
+      </g>
+
+      {/* "arsha" — remaining letters, teal */}
       <text
-        x="43"
-        y="22"
-        fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-        fontWeight="800"
-        fontSize="15"
-        letterSpacing="-0.5"
-        fill={isDark ? light : dark}
+        x="82"
+        y="72"
+        fontFamily="'Arial Black', 'Impact', 'Franklin Gothic Heavy', sans-serif"
+        fontWeight="900"
+        fontSize="62"
+        fill="#214E4F"
+        letterSpacing="-2"
       >
-        Warsha
-      </text>
-      {/* .eg accent */}
-      <text
-        x="43"
-        y="33"
-        fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
-        fontWeight="500"
-        fontSize="8"
-        letterSpacing="1"
-        fill={sage}
-        textAnchor="start"
-      >
-        WORKSHOPS
+        arsha
       </text>
     </svg>
   );
@@ -164,9 +175,9 @@ export default function Navbar({ lang, theme, onToggleLang, onToggleTheme }: Nav
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       }}>
 
-        {/* LOGO */}
+        {/* LOGO — icon only, no text label beside it */}
         <Link href="/" style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
-          <WarshaLogo size={30} isDark={isDark} />
+          <WarshaLogo size={34} />
         </Link>
 
         {/* CENTER NAV — desktop only */}
